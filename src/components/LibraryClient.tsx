@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import AddBookForm from "@/components/AddBookForm";
 import BookCard from "@/components/BookCard";
 import ReviewModal from "@/components/ReviewModal";
@@ -100,31 +101,50 @@ export default function LibraryClient({
               {myReviews.map((r) => (
                 <li
                   key={r.id}
-                  className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4"
+                  className="flex gap-3 rounded-lg border border-border bg-card p-4"
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="font-medium">{r.book_title}</span>
-                      {r.book_author && (
-                        <span className="ml-2 text-sm text-muted">
-                          {r.book_author}
-                        </span>
-                      )}
+                  <Link
+                    href={`/books/${r.book_id}`}
+                    className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-xl text-muted"
+                  >
+                    {r.book_cover_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.book_cover_url}
+                        alt={r.book_title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      "📖"
+                    )}
+                  </Link>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0">
+                        <span className="font-medium">{r.book_title}</span>
+                        {r.book_author && (
+                          <span className="ml-2 text-sm text-muted">
+                            {r.book_author}
+                          </span>
+                        )}
+                      </div>
+                      <StarDisplay rating={r.rating} />
                     </div>
-                    <StarDisplay rating={r.rating} />
+                    {r.content && (
+                      <p className="whitespace-pre-wrap text-sm">
+                        {r.content}
+                      </p>
+                    )}
+                    <form action={deleteReview} className="self-start">
+                      <input type="hidden" name="review_id" value={r.id} />
+                      <button
+                        type="submit"
+                        className="text-xs text-muted hover:text-red-600"
+                      >
+                        삭제
+                      </button>
+                    </form>
                   </div>
-                  {r.content && (
-                    <p className="whitespace-pre-wrap text-sm">{r.content}</p>
-                  )}
-                  <form action={deleteReview} className="self-start">
-                    <input type="hidden" name="review_id" value={r.id} />
-                    <button
-                      type="submit"
-                      className="text-xs text-muted hover:text-red-600"
-                    >
-                      삭제
-                    </button>
-                  </form>
                 </li>
               ))}
             </ul>

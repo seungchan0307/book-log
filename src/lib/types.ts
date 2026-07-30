@@ -38,6 +38,7 @@ export type Review = {
 export type ReviewWithBook = Review & {
   book_title: string;
   book_author: string | null;
+  book_cover_url: string | null;
 };
 
 export type PublicReview = Review & {

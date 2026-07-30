@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
+import { hasAnyReadingLog } from "@/lib/data";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createUserSession, destroySession } from "@/lib/session";
 
@@ -43,7 +44,7 @@ export async function signUp(
   });
 
   await createUserSession(Number(result.lastInsertRowid));
-  redirect("/library");
+  redirect("/calendar");
 }
 
 export async function logIn(
@@ -72,7 +73,8 @@ export async function logIn(
   }
 
   await createUserSession(user.id);
-  redirect("/library");
+  const hasLogged = await hasAnyReadingLog(user.id);
+  redirect(hasLogged ? "/library" : "/calendar");
 }
 
 export async function logOut() {

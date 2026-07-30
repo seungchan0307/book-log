@@ -82,7 +82,7 @@ export async function getPublicReviewsForBook(
 export async function listMyReviews(userId: number): Promise<ReviewWithBook[]> {
   const db = await getDb();
   const result = await db.execute({
-    sql: `SELECT r.*, b.title AS book_title, b.author AS book_author
+    sql: `SELECT r.*, b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover_url
           FROM reviews r
           JOIN books b ON b.id = r.book_id
           WHERE r.user_id = ?
@@ -162,6 +162,15 @@ export async function listAllBookOptions(): Promise<BookOption[]> {
     "SELECT id, title, author FROM books ORDER BY title ASC"
   );
   return rowsToObjects<BookOption>(result);
+}
+
+export async function hasAnyReadingLog(userId: number): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT 1 FROM reading_logs WHERE user_id = ? LIMIT 1`,
+    args: [userId],
+  });
+  return result.rows.length > 0;
 }
 
 export async function getTodayReadingLog(
