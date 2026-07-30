@@ -2,7 +2,12 @@ import Database from "better-sqlite3";
 import path from "node:path";
 import fs from "node:fs";
 
-const dataDir = path.join(process.cwd(), "data");
+// Serverless platforms (Vercel, etc.) ship a read-only deployment bundle —
+// only /tmp is writable there. Locally, keep using ./data so the DB persists
+// across restarts.
+const dataDir = process.env.VERCEL
+  ? path.join("/tmp", "book-log-data")
+  : path.join(process.cwd(), "data");
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
