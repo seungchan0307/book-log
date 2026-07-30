@@ -4,6 +4,7 @@ import type {
   BookOption,
   BookWithStats,
   DayStatus,
+  PopularReview,
   PublicReview,
   ReadingLog,
   ReviewWithBook,
@@ -12,7 +13,7 @@ import type {
 const BOOK_STATS_SELECT = `
   SELECT
     b.id, b.title, b.author, b.genre, b.cover_url, b.description,
-    b.purchase_url, b.created_by, b.created_at,
+    b.purchase_url, b.view_count, b.created_by, b.created_at,
     ROUND(AVG(r.rating), 2) AS avg_rating,
     COUNT(r.id) AS review_count,
     my.rating AS my_rating,
@@ -92,20 +93,51 @@ export async function listMyReviews(userId: number): Promise<ReviewWithBook[]> {
   return rowsToObjects<ReviewWithBook>(result);
 }
 
-export async function getTopRatedBooks(
+export async function searchBooksForExplore(
   currentUserId: number | null,
-  limit = 10
+  search: string
 ): Promise<BookWithStats[]> {
+  const args: (string | number)[] = [currentUserId ?? -1];
+  let where = "";
+  if (search) {
+    where = "WHERE (b.title LIKE ? OR b.author LIKE ?)";
+    const like = `%${search}%`;
+    args.push(like, like);
+  }
+
   const db = await getDb();
   const result = await db.execute({
-    sql: `${BOOK_STATS_SELECT}
+    sql: `${BOOK_STATS_SELECT} ${where}
           GROUP BY b.id
-          HAVING review_count >= 1
-          ORDER BY avg_rating DESC, review_count DESC
-          LIMIT ?`,
-    args: [currentUserId ?? -1, limit],
+          ORDER BY b.view_count DESC, review_count DESC`,
+    args,
   });
   return rowsToObjects<BookWithStats>(result);
+}
+
+export async function incrementBookViewCount(bookId: number): Promise<void> {
+  const db = await getDb();
+  await db.execute({
+    sql: `UPDATE books SET view_count = view_count + 1 WHERE id = ?`,
+    args: [bookId],
+  });
+}
+
+export async function getPopularReviews(limit = 20): Promise<PopularReview[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT rv.*, u.nickname AS reviewer_nickname,
+                 b.title AS book_title, b.author AS book_author,
+                 b.cover_url AS book_cover_url, b.view_count AS book_view_count
+          FROM reviews rv
+          JOIN users u ON u.id = rv.user_id
+          JOIN books b ON b.id = rv.book_id
+          WHERE rv.is_public = 1 AND rv.content IS NOT NULL
+          ORDER BY b.view_count DESC, rv.updated_at DESC
+          LIMIT ?`,
+    args: [limit],
+  });
+  return rowsToObjects<PopularReview>(result);
 }
 
 export async function hasFavoriteGenres(userId: number): Promise<boolean> {

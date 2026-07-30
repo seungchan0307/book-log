@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
-import { getBookWithStats, getPublicReviewsForBook } from "@/lib/data";
+import {
+  getBookWithStats,
+  getPublicReviewsForBook,
+  incrementBookViewCount,
+} from "@/lib/data";
 import { StarDisplay } from "@/components/StarRating";
 import BookDetailActions from "@/components/BookDetailActions";
 
@@ -18,6 +22,7 @@ export default async function BookDetailPage({
   const book = await getBookWithStats(bookId, user?.id ?? null);
   if (!book) notFound();
 
+  await incrementBookViewCount(bookId);
   const publicReviews = await getPublicReviewsForBook(bookId, user?.id ?? null);
 
   return (

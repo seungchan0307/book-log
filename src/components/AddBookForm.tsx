@@ -159,6 +159,7 @@ export default function AddBookForm() {
 
       <input type="hidden" name="purchase_url" value={fields.purchaseUrl} />
       <input type="hidden" name="isbn" value={fields.isbn} />
+      <input type="hidden" name="cover_url" value={fields.coverUrl} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1 sm:col-span-2">
@@ -205,21 +206,6 @@ export default function AddBookForm() {
               </option>
             ))}
           </select>
-        </div>
-        <div className="flex flex-col gap-1 sm:col-span-2">
-          <label htmlFor="cover_url" className="text-sm font-medium">
-            표지 이미지 URL
-          </label>
-          <input
-            id="cover_url"
-            name="cover_url"
-            placeholder="https://..."
-            value={fields.coverUrl}
-            onChange={(e) =>
-              setFields({ ...fields, coverUrl: e.target.value })
-            }
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-          />
         </div>
         <div className="flex flex-col gap-1 sm:col-span-2">
           <label htmlFor="description" className="text-sm font-medium">

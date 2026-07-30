@@ -1,8 +1,13 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { getCurrentUser } from "@/lib/session";
+import { QUOTES } from "@/lib/quotes";
 
 export default async function Home() {
   const user = await getCurrentUser();
+  await connection(); // ensure the random quote below is picked per-request
+  // eslint-disable-next-line react-hooks/purity -- intentional per-request randomness, guarded by connection() above
+  const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 pb-24 pt-[4.5cm] text-center">
@@ -13,7 +18,8 @@ export default async function Home() {
 
       {user ? (
         <p className="text-xl font-medium text-accent">
-          {user.nickname}님, 오늘도 좋은 책 만나보세요
+          <span className="font-extrabold">{user.nickname}</span>님, 오늘도 좋은 책
+          만나보세요
         </p>
       ) : (
         <p className="max-w-xl text-xl text-muted">
@@ -22,11 +28,22 @@ export default async function Home() {
         </p>
       )}
 
-      <ul className="flex flex-col items-center gap-1.5 text-muted">
-        <li>매일 읽은 기록을 남기고</li>
-        <li>별점으로 내 취향을 쌓고</li>
-        <li>꾸준한 독서 습관을 만들어요</li>
-      </ul>
+      <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-muted">
+        <span>매일 읽은 기록을 남기고</span>
+        <span aria-hidden="true">·</span>
+        <span>별점으로 내 취향을 쌓고</span>
+        <span aria-hidden="true">·</span>
+        <span>꾸준한 독서 습관을 만들어요</span>
+      </p>
+
+      <div className="flex max-w-xl flex-col items-center gap-2">
+        <p className="text-xl font-semibold leading-relaxed">
+          “{quote.text}”
+        </p>
+        <p className="text-base font-medium text-foreground">
+          - {quote.book} <span className="text-xl">·</span> {quote.author} -
+        </p>
+      </div>
 
       <div className="flex gap-3">
         {user ? (

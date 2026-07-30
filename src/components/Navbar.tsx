@@ -18,8 +18,11 @@ export default async function Navbar() {
           <Link href="/calendar" className="hover:text-accent">
             독서 캘린더
           </Link>
+          <Link href="/explore" className="hover:text-accent">
+            탐색
+          </Link>
           <Link href="/recommend" className="hover:text-accent">
-            탐색/추천
+            추천
           </Link>
           {user ? (
             <>

@@ -45,6 +45,7 @@ async function initSchema(client: Client) {
         description TEXT,
         purchase_url TEXT,
         isbn TEXT,
+        view_count INTEGER NOT NULL DEFAULT 0,
         created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
@@ -52,7 +53,7 @@ async function initSchema(client: Client) {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+        rating REAL NOT NULL CHECK (rating BETWEEN 0.5 AND 5 AND rating * 2 = CAST(rating * 2 AS INTEGER)),
         content TEXT,
         is_public INTEGER NOT NULL DEFAULT 1,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -87,6 +88,47 @@ async function initSchema(client: Client) {
     ],
     "write"
   );
+
+  // Migration guard: view_count was added after the books table already
+  // existed in production, so CREATE TABLE IF NOT EXISTS above won't add it.
+  try {
+    await client.execute(
+      "ALTER TABLE books ADD COLUMN view_count INTEGER NOT NULL DEFAULT 0"
+    );
+  } catch {
+    // column already exists
+  }
+
+  // Migration guard: reviews.rating started as INTEGER (whole stars only).
+  // SQLite can't ALTER a column's type/CHECK in place, so rebuild the table
+  // when the old integer-only constraint is still present.
+  const reviewsSql = await client.execute(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'reviews'"
+  );
+  const currentDdl = reviewsSql.rows[0]?.[0] as string | undefined;
+  if (currentDdl && currentDdl.includes("rating INTEGER")) {
+    await client.batch(
+      [
+        `CREATE TABLE reviews_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          rating REAL NOT NULL CHECK (rating BETWEEN 0.5 AND 5 AND rating * 2 = CAST(rating * 2 AS INTEGER)),
+          content TEXT,
+          is_public INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+          UNIQUE (book_id, user_id)
+        )`,
+        `INSERT INTO reviews_new SELECT * FROM reviews`,
+        `DROP TABLE reviews`,
+        `ALTER TABLE reviews_new RENAME TO reviews`,
+        `CREATE INDEX IF NOT EXISTS idx_reviews_book_id ON reviews(book_id)`,
+        `CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id)`,
+      ],
+      "write"
+    );
+  }
 }
 
 export async function getDb(): Promise<Client> {

@@ -23,8 +23,8 @@ export async function upsertReview(
   if (!Number.isInteger(bookId) || bookId <= 0) {
     return { error: "잘못된 요청입니다." };
   }
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    return { error: "평점은 1~5점 사이여야 합니다." };
+  if (!Number.isFinite(rating) || rating < 0.5 || rating > 5 || !Number.isInteger(rating * 2)) {
+    return { error: "평점은 0.5~5점 사이에서 0.5점 단위로 선택해주세요." };
   }
   if (content.length > 4000) {
     return { error: "감상평은 4000자 이내로 작성해주세요." };

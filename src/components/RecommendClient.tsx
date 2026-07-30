@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import BookCard from "@/components/BookCard";
 import ReviewModal from "@/components/ReviewModal";
-import type { BookWithStats } from "@/lib/types";
+import { StarDisplay } from "@/components/StarRating";
+import type { BookWithStats, PopularReview } from "@/lib/types";
 
 function BookGrid({
   books,
@@ -35,13 +37,72 @@ function BookGrid({
   );
 }
 
+function PopularReviewList({ reviews }: { reviews: PopularReview[] }) {
+  if (reviews.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
+        아직 보여줄 감상평이 없어요.
+      </p>
+    );
+  }
+  return (
+    <ul className="flex flex-col gap-3">
+      {reviews.map((r) => (
+        <li
+          key={r.id}
+          className="flex gap-3 rounded-lg border border-border bg-card p-4"
+        >
+          <Link
+            href={`/books/${r.book_id}`}
+            className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-xl text-muted"
+          >
+            {r.book_cover_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={r.book_cover_url}
+                alt={r.book_title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              "📖"
+            )}
+          </Link>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <Link href={`/books/${r.book_id}`} className="hover:underline">
+                  <span className="font-medium">{r.book_title}</span>
+                </Link>
+                {r.book_author && (
+                  <span className="ml-2 text-sm text-muted">
+                    {r.book_author}
+                  </span>
+                )}
+              </div>
+              <StarDisplay rating={r.rating} />
+            </div>
+            {r.content && (
+              <p className="whitespace-pre-wrap text-sm">{r.content}</p>
+            )}
+            <div className="flex items-center gap-2 text-xs text-muted">
+              <span>{r.reviewer_nickname}</span>
+              <span>·</span>
+              <span>탐색 {r.book_view_count}회</span>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function RecommendClient({
-  topRated,
+  popularReviews,
   personalized,
   isLoggedIn,
   hasFavoriteGenres,
 }: {
-  topRated: BookWithStats[];
+  popularReviews: PopularReview[];
   personalized: BookWithStats[];
   isLoggedIn: boolean;
   hasFavoriteGenres: boolean;
@@ -55,7 +116,7 @@ export default function RecommendClient({
       <div>
         <h1 className="text-2xl font-bold">추천</h1>
         <p className="mt-1 text-muted">
-          다른 독자들의 평점을 바탕으로 책을 추천해드려요.
+          다른 독자들이 많이 살펴본 감상평을 추천해드려요.
         </p>
       </div>
 
@@ -82,12 +143,8 @@ export default function RecommendClient({
       )}
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-bold">평점 높은 책</h2>
-        <BookGrid
-          books={topRated}
-          isLoggedIn={isLoggedIn}
-          onReview={setReviewTarget}
-        />
+        <h2 className="text-xl font-bold">많이 본 감상평</h2>
+        <PopularReviewList reviews={popularReviews} />
       </section>
 
       {reviewTarget && (

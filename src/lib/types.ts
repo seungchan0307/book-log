@@ -12,6 +12,7 @@ export type Book = {
   cover_url: string | null;
   description: string | null;
   purchase_url: string | null;
+  view_count: number;
   created_by: number | null;
   created_at: string;
 };
@@ -43,6 +44,14 @@ export type ReviewWithBook = Review & {
 
 export type PublicReview = Review & {
   reviewer_nickname: string;
+};
+
+export type PopularReview = Review & {
+  reviewer_nickname: string;
+  book_title: string;
+  book_author: string | null;
+  book_cover_url: string | null;
+  book_view_count: number;
 };
 
 export type ReadingLogStatus = "read" | "skipped";
