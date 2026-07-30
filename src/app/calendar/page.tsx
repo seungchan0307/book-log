@@ -34,11 +34,11 @@ export default async function CalendarPage() {
   const today = todayDateString();
   const [year, month] = today.split("-").map(Number);
 
-  const todayLog = getTodayReadingLog(user.id);
-  const streak = getCurrentStreak(user.id);
-  const totalDaysRead = getTotalReadDays(user.id);
-  const monthDays = getMonthReadingDays(user.id, year, month);
-  const books = todayLog ? [] : listAllBookOptions();
+  const todayLog = await getTodayReadingLog(user.id);
+  const streak = await getCurrentStreak(user.id);
+  const totalDaysRead = await getTotalReadDays(user.id);
+  const monthDays = await getMonthReadingDays(user.id, year, month);
+  const books = todayLog ? [] : await listAllBookOptions();
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-16 text-center">

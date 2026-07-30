@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import db from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { todayDateString } from "@/lib/date";
 import { getCurrentStreak, getTotalReadDays } from "@/lib/data";
@@ -27,11 +27,15 @@ export async function submitReadingCheckin(
   }
 
   const trimmedTitle = customTitle?.trim() ?? "";
+  const db = await getDb();
 
   if (status === "read") {
     if (bookId !== null) {
-      const book = db.prepare("SELECT id FROM books WHERE id = ?").get(bookId);
-      if (!book) {
+      const book = await db.execute({
+        sql: "SELECT id FROM books WHERE id = ?",
+        args: [bookId],
+      });
+      if (book.rows.length === 0) {
         return { error: "존재하지 않는 책입니다." };
       }
     } else if (trimmedTitle.length === 0) {
@@ -42,23 +46,25 @@ export async function submitReadingCheckin(
   }
 
   const today = todayDateString();
-  const existing = db
-    .prepare("SELECT id FROM reading_logs WHERE user_id = ? AND log_date = ?")
-    .get(user.id, today);
-  if (existing) {
+  const existing = await db.execute({
+    sql: "SELECT id FROM reading_logs WHERE user_id = ? AND log_date = ?",
+    args: [user.id, today],
+  });
+  if (existing.rows.length > 0) {
     return { error: "오늘은 이미 기록을 남겼어요." };
   }
 
-  db.prepare(
-    `INSERT INTO reading_logs (user_id, log_date, status, book_id, custom_title)
-     VALUES (?, ?, ?, ?, ?)`
-  ).run(
-    user.id,
-    today,
-    status,
-    status === "read" ? bookId : null,
-    status === "read" && bookId === null ? trimmedTitle : null
-  );
+  await db.execute({
+    sql: `INSERT INTO reading_logs (user_id, log_date, status, book_id, custom_title)
+          VALUES (?, ?, ?, ?, ?)`,
+    args: [
+      user.id,
+      today,
+      status,
+      status === "read" ? bookId : null,
+      status === "read" && bookId === null ? trimmedTitle : null,
+    ],
+  });
 
   revalidatePath("/");
   revalidatePath("/calendar");
@@ -66,7 +72,7 @@ export async function submitReadingCheckin(
   return {
     success: true,
     status,
-    streak: getCurrentStreak(user.id),
-    totalDaysRead: getTotalReadDays(user.id),
+    streak: await getCurrentStreak(user.id),
+    totalDaysRead: await getTotalReadDays(user.id),
   };
 }

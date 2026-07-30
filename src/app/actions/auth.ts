@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import db from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createUserSession, destroySession } from "@/lib/session";
 
@@ -27,19 +27,20 @@ export async function signUp(
     return { error: "비밀번호는 8자 이상이어야 합니다." };
   }
 
-  const existing = db
-    .prepare("SELECT id FROM users WHERE email = ?")
-    .get(email);
-  if (existing) {
+  const db = await getDb();
+  const existing = await db.execute({
+    sql: "SELECT id FROM users WHERE email = ?",
+    args: [email],
+  });
+  if (existing.rows.length > 0) {
     return { error: "이미 가입된 이메일입니다." };
   }
 
   const passwordHash = await hashPassword(password);
-  const result = db
-    .prepare(
-      "INSERT INTO users (email, nickname, password_hash) VALUES (?, ?, ?)"
-    )
-    .run(email, nickname, passwordHash);
+  const result = await db.execute({
+    sql: "INSERT INTO users (email, nickname, password_hash) VALUES (?, ?, ?)",
+    args: [email, nickname, passwordHash],
+  });
 
   await createUserSession(Number(result.lastInsertRowid));
   redirect("/library");
@@ -52,9 +53,14 @@ export async function logIn(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
 
-  const user = db
-    .prepare("SELECT id, password_hash FROM users WHERE email = ?")
-    .get(email) as { id: number; password_hash: string } | undefined;
+  const db = await getDb();
+  const result = await db.execute({
+    sql: "SELECT id, password_hash FROM users WHERE email = ?",
+    args: [email],
+  });
+  const user = result.rows[0] as unknown as
+    | { id: number; password_hash: string }
+    | undefined;
 
   if (!user) {
     return { error: "이메일 또는 비밀번호가 올바르지 않습니다." };

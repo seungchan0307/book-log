@@ -4,8 +4,8 @@ import LibraryClient from "@/components/LibraryClient";
 
 export default async function LibraryPage() {
   const user = await getCurrentUser();
-  const books = listBooksWithStats(user?.id ?? null);
-  const myReviews = user ? listMyReviews(user.id) : [];
+  const books = await listBooksWithStats(user?.id ?? null);
+  const myReviews = user ? await listMyReviews(user.id) : [];
 
   return (
     <LibraryClient

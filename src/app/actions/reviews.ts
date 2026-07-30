@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import db from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 
 export type ReviewFormState = { error?: string; success?: boolean };
@@ -30,18 +30,23 @@ export async function upsertReview(
     return { error: "감상평은 4000자 이내로 작성해주세요." };
   }
 
-  const book = db.prepare("SELECT id FROM books WHERE id = ?").get(bookId);
-  if (!book) {
+  const db = await getDb();
+  const book = await db.execute({
+    sql: "SELECT id FROM books WHERE id = ?",
+    args: [bookId],
+  });
+  if (book.rows.length === 0) {
     return { error: "존재하지 않는 책입니다." };
   }
 
-  db.prepare(
-    `INSERT INTO reviews (book_id, user_id, rating, content, is_public)
-     VALUES (?, ?, ?, ?, ?)
-     ON CONFLICT(book_id, user_id)
-     DO UPDATE SET rating = excluded.rating, content = excluded.content,
-       is_public = excluded.is_public, updated_at = datetime('now')`
-  ).run(bookId, user.id, rating, content || null, isPublic);
+  await db.execute({
+    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(book_id, user_id)
+          DO UPDATE SET rating = excluded.rating, content = excluded.content,
+            is_public = excluded.is_public, updated_at = datetime('now')`,
+    args: [bookId, user.id, rating, content || null, isPublic],
+  });
 
   revalidatePath("/library");
   revalidatePath("/recommend");
@@ -56,15 +61,18 @@ export async function deleteReview(formData: FormData) {
   const reviewId = Number(formData.get("review_id"));
   if (!Number.isInteger(reviewId) || reviewId <= 0) return;
 
-  const review = db
-    .prepare("SELECT book_id FROM reviews WHERE id = ? AND user_id = ?")
-    .get(reviewId, user.id) as { book_id: number } | undefined;
+  const db = await getDb();
+  const result = await db.execute({
+    sql: "SELECT book_id FROM reviews WHERE id = ? AND user_id = ?",
+    args: [reviewId, user.id],
+  });
+  const review = result.rows[0] as unknown as { book_id: number } | undefined;
   if (!review) return;
 
-  db.prepare("DELETE FROM reviews WHERE id = ? AND user_id = ?").run(
-    reviewId,
-    user.id
-  );
+  await db.execute({
+    sql: "DELETE FROM reviews WHERE id = ? AND user_id = ?",
+    args: [reviewId, user.id],
+  });
 
   revalidatePath("/library");
   revalidatePath("/recommend");

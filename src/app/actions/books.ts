@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import db from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { GENRES } from "@/lib/genres";
 import { searchAladin, type AladinBookResult } from "@/lib/aladin";
@@ -26,14 +26,14 @@ export async function searchAladinBooks(
     return { error: "검색어를 입력해주세요." };
   }
 
-  const cached = getCachedSearchResults(trimmed);
+  const cached = await getCachedSearchResults(trimmed);
   if (cached.length > 0) {
     return { results: cached };
   }
 
   try {
     const results = await searchAladin(trimmed);
-    cacheSearchResults(results);
+    await cacheSearchResults(results);
     return { results };
   } catch (e) {
     return {
@@ -72,19 +72,21 @@ export async function addBook(
     return { error: "구매 링크는 http(s)로 시작해야 합니다." };
   }
 
-  db.prepare(
-    `INSERT INTO books (title, author, genre, cover_url, description, purchase_url, isbn, created_by)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    title,
-    author || null,
-    genre || null,
-    coverUrl || null,
-    description || null,
-    purchaseUrl || null,
-    isbn || null,
-    user.id
-  );
+  const db = await getDb();
+  await db.execute({
+    sql: `INSERT INTO books (title, author, genre, cover_url, description, purchase_url, isbn, created_by)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    args: [
+      title,
+      author || null,
+      genre || null,
+      coverUrl || null,
+      description || null,
+      purchaseUrl || null,
+      isbn || null,
+      user.id,
+    ],
+  });
 
   revalidatePath("/library");
   revalidatePath("/recommend");

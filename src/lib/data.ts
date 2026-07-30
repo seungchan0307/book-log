@@ -1,4 +1,4 @@
-import db from "@/lib/db";
+import { getDb, rowsToObjects } from "@/lib/db";
 import { shiftDateString, todayDateString } from "@/lib/date";
 import type {
   BookOption,
@@ -23,168 +23,178 @@ const BOOK_STATS_SELECT = `
   LEFT JOIN reviews my ON my.book_id = b.id AND my.user_id = ?
 `;
 
-export function listBooksWithStats(
+export async function listBooksWithStats(
   currentUserId: number | null,
   opts: { search?: string; genre?: string } = {}
-): BookWithStats[] {
+): Promise<BookWithStats[]> {
   const clauses: string[] = [];
-  const params: unknown[] = [currentUserId ?? -1];
+  const args: (string | number)[] = [currentUserId ?? -1];
 
   if (opts.search) {
     clauses.push("(b.title LIKE ? OR b.author LIKE ?)");
     const like = `%${opts.search}%`;
-    params.push(like, like);
+    args.push(like, like);
   }
   if (opts.genre) {
     clauses.push("b.genre = ?");
-    params.push(opts.genre);
+    args.push(opts.genre);
   }
 
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
 
-  const rows = db
-    .prepare(
-      `${BOOK_STATS_SELECT} ${where} GROUP BY b.id ORDER BY b.created_at DESC`
-    )
-    .all(...params) as BookWithStats[];
-
-  return rows;
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT} ${where} GROUP BY b.id ORDER BY b.created_at DESC`,
+    args,
+  });
+  return rowsToObjects<BookWithStats>(result);
 }
 
-export function getBookWithStats(
+export async function getBookWithStats(
   bookId: number,
   currentUserId: number | null
-): BookWithStats | null {
-  const row = db
-    .prepare(`${BOOK_STATS_SELECT} WHERE b.id = ? GROUP BY b.id`)
-    .get(currentUserId ?? -1, bookId) as BookWithStats | undefined;
-  return row ?? null;
+): Promise<BookWithStats | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT} WHERE b.id = ? GROUP BY b.id`,
+    args: [currentUserId ?? -1, bookId],
+  });
+  return rowsToObjects<BookWithStats>(result)[0] ?? null;
 }
 
-export function getPublicReviewsForBook(
+export async function getPublicReviewsForBook(
   bookId: number,
   excludeUserId: number | null
-): PublicReview[] {
-  return db
-    .prepare(
-      `SELECT rv.*, u.nickname AS reviewer_nickname
-       FROM reviews rv
-       JOIN users u ON u.id = rv.user_id
-       WHERE rv.book_id = ? AND rv.is_public = 1 AND rv.user_id != ?
-         AND rv.content IS NOT NULL
-       ORDER BY rv.updated_at DESC`
-    )
-    .all(bookId, excludeUserId ?? -1) as PublicReview[];
+): Promise<PublicReview[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT rv.*, u.nickname AS reviewer_nickname
+          FROM reviews rv
+          JOIN users u ON u.id = rv.user_id
+          WHERE rv.book_id = ? AND rv.is_public = 1 AND rv.user_id != ?
+            AND rv.content IS NOT NULL
+          ORDER BY rv.updated_at DESC`,
+    args: [bookId, excludeUserId ?? -1],
+  });
+  return rowsToObjects<PublicReview>(result);
 }
 
-export function listMyReviews(userId: number): ReviewWithBook[] {
-  return db
-    .prepare(
-      `SELECT r.*, b.title AS book_title, b.author AS book_author
-       FROM reviews r
-       JOIN books b ON b.id = r.book_id
-       WHERE r.user_id = ?
-       ORDER BY r.updated_at DESC`
-    )
-    .all(userId) as ReviewWithBook[];
+export async function listMyReviews(userId: number): Promise<ReviewWithBook[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT r.*, b.title AS book_title, b.author AS book_author
+          FROM reviews r
+          JOIN books b ON b.id = r.book_id
+          WHERE r.user_id = ?
+          ORDER BY r.updated_at DESC`,
+    args: [userId],
+  });
+  return rowsToObjects<ReviewWithBook>(result);
 }
 
-export function getTopRatedBooks(
+export async function getTopRatedBooks(
   currentUserId: number | null,
   limit = 10
-): BookWithStats[] {
-  const rows = db
-    .prepare(
-      `${BOOK_STATS_SELECT}
-       GROUP BY b.id
-       HAVING review_count >= 1
-       ORDER BY avg_rating DESC, review_count DESC
-       LIMIT ?`
-    )
-    .all(currentUserId ?? -1, limit) as BookWithStats[];
-  return rows;
+): Promise<BookWithStats[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT}
+          GROUP BY b.id
+          HAVING review_count >= 1
+          ORDER BY avg_rating DESC, review_count DESC
+          LIMIT ?`,
+    args: [currentUserId ?? -1, limit],
+  });
+  return rowsToObjects<BookWithStats>(result);
 }
 
-export function hasFavoriteGenres(userId: number): boolean {
-  const row = db
-    .prepare(
-      `SELECT 1
-       FROM reviews r
-       JOIN books b ON b.id = r.book_id
-       WHERE r.user_id = ? AND r.rating >= 4 AND b.genre IS NOT NULL
-       LIMIT 1`
-    )
-    .get(userId);
-  return Boolean(row);
+export async function hasFavoriteGenres(userId: number): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT 1
+          FROM reviews r
+          JOIN books b ON b.id = r.book_id
+          WHERE r.user_id = ? AND r.rating >= 4 AND b.genre IS NOT NULL
+          LIMIT 1`,
+    args: [userId],
+  });
+  return result.rows.length > 0;
 }
 
-export function getPersonalizedRecommendations(
+export async function getPersonalizedRecommendations(
   userId: number,
   limit = 10
-): BookWithStats[] {
-  const favoriteGenres = db
-    .prepare(
-      `SELECT DISTINCT b.genre AS genre
-       FROM reviews r
-       JOIN books b ON b.id = r.book_id
-       WHERE r.user_id = ? AND r.rating >= 4 AND b.genre IS NOT NULL`
-    )
-    .all(userId) as { genre: string }[];
+): Promise<BookWithStats[]> {
+  const db = await getDb();
+  const genreResult = await db.execute({
+    sql: `SELECT DISTINCT b.genre AS genre
+          FROM reviews r
+          JOIN books b ON b.id = r.book_id
+          WHERE r.user_id = ? AND r.rating >= 4 AND b.genre IS NOT NULL`,
+    args: [userId],
+  });
+  const favoriteGenres = rowsToObjects<{ genre: string }>(genreResult);
 
   if (favoriteGenres.length === 0) return [];
 
   const placeholders = favoriteGenres.map(() => "?").join(", ");
-  const rows = db
-    .prepare(
-      `${BOOK_STATS_SELECT}
-       WHERE b.genre IN (${placeholders})
-         AND b.id NOT IN (SELECT book_id FROM reviews WHERE user_id = ?)
-       GROUP BY b.id
-       HAVING review_count >= 1
-       ORDER BY avg_rating DESC, review_count DESC
-       LIMIT ?`
-    )
-    .all(
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT}
+          WHERE b.genre IN (${placeholders})
+            AND b.id NOT IN (SELECT book_id FROM reviews WHERE user_id = ?)
+          GROUP BY b.id
+          HAVING review_count >= 1
+          ORDER BY avg_rating DESC, review_count DESC
+          LIMIT ?`,
+    args: [
       userId,
       ...favoriteGenres.map((g) => g.genre),
       userId,
-      limit
-    ) as BookWithStats[];
-
-  return rows;
+      limit,
+    ],
+  });
+  return rowsToObjects<BookWithStats>(result);
 }
 
-export function listAllBookOptions(): BookOption[] {
-  return db
-    .prepare(`SELECT id, title, author FROM books ORDER BY title ASC`)
-    .all() as BookOption[];
+export async function listAllBookOptions(): Promise<BookOption[]> {
+  const db = await getDb();
+  const result = await db.execute(
+    "SELECT id, title, author FROM books ORDER BY title ASC"
+  );
+  return rowsToObjects<BookOption>(result);
 }
 
-export function getTodayReadingLog(userId: number): ReadingLog | null {
-  const row = db
-    .prepare(`SELECT * FROM reading_logs WHERE user_id = ? AND log_date = ?`)
-    .get(userId, todayDateString()) as ReadingLog | undefined;
-  return row ?? null;
+export async function getTodayReadingLog(
+  userId: number
+): Promise<ReadingLog | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT * FROM reading_logs WHERE user_id = ? AND log_date = ?`,
+    args: [userId, todayDateString()],
+  });
+  return rowsToObjects<ReadingLog>(result)[0] ?? null;
 }
 
-export function getTotalReadDays(userId: number): number {
-  const row = db
-    .prepare(
-      `SELECT COUNT(*) AS count FROM reading_logs WHERE user_id = ? AND status = 'read'`
-    )
-    .get(userId) as { count: number };
+export async function getTotalReadDays(userId: number): Promise<number> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT COUNT(*) AS count FROM reading_logs WHERE user_id = ? AND status = 'read'`,
+    args: [userId],
+  });
+  const row = rowsToObjects<{ count: number }>(result)[0];
   return row.count;
 }
 
-export function getCurrentStreak(userId: number): number {
-  const todayLog = getTodayReadingLog(userId);
+export async function getCurrentStreak(userId: number): Promise<number> {
+  const todayLog = await getTodayReadingLog(userId);
   if (todayLog && todayLog.status === "skipped") return 0;
 
-  const rows = db
-    .prepare(
-      `SELECT log_date FROM reading_logs WHERE user_id = ? AND status = 'read'`
-    )
-    .all(userId) as { log_date: string }[];
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT log_date FROM reading_logs WHERE user_id = ? AND status = 'read'`,
+    args: [userId],
+  });
+  const rows = rowsToObjects<{ log_date: string }>(result);
   const readDates = new Set(rows.map((r) => r.log_date));
 
   const today = todayDateString();
@@ -198,28 +208,32 @@ export function getCurrentStreak(userId: number): number {
   return streak;
 }
 
-export function getMonthReadingDays(
+export async function getMonthReadingDays(
   userId: number,
   year: number,
   month: number
-): DayStatus[] {
+): Promise<DayStatus[]> {
   const start = `${year}-${String(month).padStart(2, "0")}-01`;
   const daysInMonth = new Date(year, month, 0).getDate();
   const end = `${year}-${String(month).padStart(2, "0")}-${String(daysInMonth).padStart(2, "0")}`;
 
-  const rows = db
-    .prepare(
-      `SELECT log_date, status FROM reading_logs
-       WHERE user_id = ? AND log_date BETWEEN ? AND ?`
-    )
-    .all(userId, start, end) as { log_date: string; status: "read" | "skipped" }[];
+  const db = await getDb();
+  const queryResult = await db.execute({
+    sql: `SELECT log_date, status FROM reading_logs
+          WHERE user_id = ? AND log_date BETWEEN ? AND ?`,
+    args: [userId, start, end],
+  });
+  const rows = rowsToObjects<{
+    log_date: string;
+    status: "read" | "skipped";
+  }>(queryResult);
 
   const statusByDate = new Map(rows.map((r) => [r.log_date, r.status]));
 
-  const result: DayStatus[] = [];
+  const days: DayStatus[] = [];
   for (let d = 1; d <= daysInMonth; d++) {
     const date = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    result.push({ date, status: statusByDate.get(date) ?? null });
+    days.push({ date, status: statusByDate.get(date) ?? null });
   }
-  return result;
+  return days;
 }

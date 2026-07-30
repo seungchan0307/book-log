@@ -15,10 +15,10 @@ export default async function BookDetailPage({
   if (!Number.isInteger(bookId) || bookId <= 0) notFound();
 
   const user = await getCurrentUser();
-  const book = getBookWithStats(bookId, user?.id ?? null);
+  const book = await getBookWithStats(bookId, user?.id ?? null);
   if (!book) notFound();
 
-  const publicReviews = getPublicReviewsForBook(bookId, user?.id ?? null);
+  const publicReviews = await getPublicReviewsForBook(bookId, user?.id ?? null);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
