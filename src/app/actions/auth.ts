@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
-import { hasAnyReadingLog } from "@/lib/data";
+import { getTodayReadingLog } from "@/lib/data";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createUserSession, destroySession } from "@/lib/session";
 
@@ -73,8 +73,8 @@ export async function logIn(
   }
 
   await createUserSession(user.id);
-  const hasLogged = await hasAnyReadingLog(user.id);
-  redirect(hasLogged ? "/library" : "/calendar");
+  const todayLog = await getTodayReadingLog(user.id);
+  redirect(todayLog ? "/library" : "/calendar");
 }
 
 export async function logOut() {

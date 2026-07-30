@@ -196,15 +196,6 @@ export async function listAllBookOptions(): Promise<BookOption[]> {
   return rowsToObjects<BookOption>(result);
 }
 
-export async function hasAnyReadingLog(userId: number): Promise<boolean> {
-  const db = await getDb();
-  const result = await db.execute({
-    sql: `SELECT 1 FROM reading_logs WHERE user_id = ? LIMIT 1`,
-    args: [userId],
-  });
-  return result.rows.length > 0;
-}
-
 export async function getTodayReadingLog(
   userId: number
 ): Promise<ReadingLog | null> {
