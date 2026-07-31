@@ -9,12 +9,13 @@ import {
 import RecommendClient from "@/components/RecommendClient";
 
 const MIN_REVIEWS_FOR_TOP_RATED = 10;
+const MOST_VIEWED_LIMIT = 5;
 
 export default async function RecommendPage() {
   const user = await getCurrentUser();
   const userId = user?.id ?? null;
   const popularReviews = await getPopularReviews(20);
-  const mostViewed = await getMostViewedBooks(userId, 12);
+  const mostViewed = await getMostViewedBooks(userId, MOST_VIEWED_LIMIT);
   const topRated = await getTopRatedBooks(
     userId,
     MIN_REVIEWS_FOR_TOP_RATED,

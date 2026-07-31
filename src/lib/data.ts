@@ -125,6 +125,16 @@ export async function searchBooksForExplore(
   return rowsToObjects<BookWithStats>(result);
 }
 
+// Aladin's "Book" search occasionally turns up non-book goods (sticker
+// packs, mini-books bundled with merch, etc). Real books always carry a
+// proper Bookland ISBN (978/979 prefix) or, for manual entries, no ISBN at
+// all — goods use ordinary retail barcodes instead, so this filters those
+// out of curated picks without needing a dedicated "is this a book" field.
+const LOOKS_LIKE_A_BOOK_WHERE = `
+  (b.isbn IS NULL OR b.isbn LIKE '978%' OR b.isbn LIKE '979%')
+  AND b.title NOT LIKE '%스티커%'
+`;
+
 export async function getMostViewedBooks(
   currentUserId: number | null,
   limit = 10
@@ -132,6 +142,7 @@ export async function getMostViewedBooks(
   const db = await getDb();
   const result = await db.execute({
     sql: `${BOOK_STATS_SELECT}
+          WHERE ${LOOKS_LIKE_A_BOOK_WHERE}
           GROUP BY b.id
           HAVING b.view_count > 0
           ORDER BY b.view_count DESC, review_count DESC
@@ -151,6 +162,7 @@ export async function getTopRatedBooks(
   const db = await getDb();
   const result = await db.execute({
     sql: `${BOOK_STATS_SELECT}
+          WHERE ${LOOKS_LIKE_A_BOOK_WHERE}
           GROUP BY b.id
           HAVING review_count >= ?
           ORDER BY avg_rating DESC, review_count DESC
