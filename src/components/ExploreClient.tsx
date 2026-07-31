@@ -16,46 +16,57 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
-
-  const [findQuery, setFindQuery] = useState("");
-  const [findResults, setFindResults] = useState<AladinBookResult[]>([]);
-  const [findError, setFindError] = useState<string | null>(null);
-  const [isFinding, startFind] = useTransition();
+  const [aladinResults, setAladinResults] = useState<AladinBookResult[]>([]);
+  const [aladinError, setAladinError] = useState<string | null>(null);
+  const [isSearching, startSearch] = useTransition();
   const [openingIsbn, setOpeningIsbn] = useState<string | null>(null);
 
+  // Already-registered books filter live as you type; searching the wider
+  // Aladin catalog needs a network call, triggered by the same search box.
   const filtered = useMemo(() => {
-    return books.filter((b) => {
-      if (genre && b.genre !== genre) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        const inTitle = b.title.toLowerCase().includes(q);
-        const inAuthor = (b.author ?? "").toLowerCase().includes(q);
-        if (!inTitle && !inAuthor) return false;
-      }
-      return true;
-    });
+    return books
+      .filter((b) => {
+        if (genre && b.genre !== genre) return false;
+        if (search) {
+          const q = search.toLowerCase();
+          const inTitle = b.title.toLowerCase().includes(q);
+          const inAuthor = (b.author ?? "").toLowerCase().includes(q);
+          if (!inTitle && !inAuthor) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const ratingDiff = (b.avg_rating ?? -1) - (a.avg_rating ?? -1);
+        if (ratingDiff !== 0) return ratingDiff;
+        return b.review_count - a.review_count;
+      });
   }, [books, search, genre]);
 
-  function runFind() {
-    setFindError(null);
-    startFind(async () => {
-      const result = await searchAladinForExplore(findQuery);
+  function runAladinSearch() {
+    if (!search.trim()) {
+      setAladinResults([]);
+      setAladinError(null);
+      return;
+    }
+    setAladinError(null);
+    startSearch(async () => {
+      const result = await searchAladinForExplore(search);
       if ("error" in result) {
-        setFindError(result.error);
-        setFindResults([]);
+        setAladinError(result.error);
+        setAladinResults([]);
         return;
       }
-      setFindResults(result.results);
+      setAladinResults(result.results);
     });
   }
 
   function openResult(book: AladinBookResult) {
     setOpeningIsbn(book.isbn);
-    startFind(async () => {
+    startSearch(async () => {
       const result = await findOrCreateBookByIsbn(book);
       setOpeningIsbn(null);
       if ("error" in result) {
-        setFindError(result.error);
+        setAladinError(result.error);
         return;
       }
       router.push(`/books/${result.bookId}`);
@@ -71,42 +82,53 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
         </p>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3">
-        <span className="text-sm font-medium">탐색하고 싶은 책 찾아보기</span>
-        <div className="flex gap-2">
-          <input
-            value={findQuery}
-            onChange={(e) => setFindQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                runFind();
-              }
-            }}
-            placeholder="책 제목으로 검색"
-            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              runAladinSearch();
+            }
+          }}
+          placeholder="제목 또는 저자로 검색"
+          className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+        />
+        <button
+          type="button"
+          onClick={runAladinSearch}
+          disabled={isSearching || !search.trim()}
+          className="rounded-md border border-border px-3 py-2 text-sm hover:bg-card disabled:opacity-50"
+        >
+          {isSearching ? "검색 중..." : "검색"}
+        </button>
+        <div className="w-48">
+          <GenreSelect
+            value={genre}
+            onChange={setGenre}
+            placeholder="장르로 검색"
+            clearLabel="전체 장르"
           />
-          <button
-            type="button"
-            onClick={runFind}
-            disabled={isFinding || !findQuery.trim()}
-            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-background disabled:opacity-50"
-          >
-            {isFinding && !openingIsbn ? "검색 중..." : "검색"}
-          </button>
         </div>
-        {findError && <p className="text-sm text-red-600">{findError}</p>}
-        {findResults.length > 0 && (
-          <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
-            {findResults.map((b) => (
+      </div>
+
+      {aladinError && <p className="text-sm text-red-600">{aladinError}</p>}
+      {aladinResults.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium text-muted">
+            아직 등록되지 않은 책
+          </span>
+          <ul className="flex flex-col gap-2">
+            {aladinResults.map((b) => (
               <li key={b.isbn || b.title}>
                 <button
                   type="button"
                   onClick={() => openResult(b)}
-                  disabled={isFinding}
-                  className="flex w-full gap-2 rounded-md border border-border p-2 text-left hover:bg-background disabled:opacity-50"
+                  disabled={isSearching}
+                  className="flex w-full gap-3 rounded-lg border border-border bg-card p-3 text-left hover:border-accent disabled:opacity-50"
                 >
-                  <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-lg text-muted">
+                  <div className="flex h-16 w-11 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-lg text-muted">
                     {b.cover ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -118,14 +140,14 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
                       "📖"
                     )}
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{b.title}</p>
                     <p className="truncate text-xs text-muted">
                       {[b.author, b.publisher].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   {openingIsbn === b.isbn && (
-                    <span className="ml-auto self-center text-xs text-muted">
+                    <span className="self-center text-xs text-muted">
                       여는 중...
                     </span>
                   )}
@@ -133,25 +155,8 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
               </li>
             ))}
           </ul>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="등록된 책을 제목 또는 저자로 검색"
-          className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
-        />
-        <div className="w-48">
-          <GenreSelect
-            value={genre}
-            onChange={setGenre}
-            placeholder="장르로 검색"
-            clearLabel="전체 장르"
-          />
         </div>
-      </div>
+      )}
 
       {filtered.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-8 text-center text-muted">
