@@ -1,10 +1,10 @@
 import { getCurrentUser } from "@/lib/session";
-import { listBooksWithStats, listMyReviews } from "@/lib/data";
+import { listMyBooksWithStats, listMyReviews } from "@/lib/data";
 import LibraryClient from "@/components/LibraryClient";
 
 export default async function LibraryPage() {
   const user = await getCurrentUser();
-  const books = await listBooksWithStats(user?.id ?? null);
+  const books = user ? await listMyBooksWithStats(user.id) : [];
   const myReviews = user ? await listMyReviews(user.id) : [];
 
   return (

@@ -24,12 +24,21 @@ const BOOK_STATS_SELECT = `
   LEFT JOIN reviews my ON my.book_id = b.id AND my.user_id = ?
 `;
 
-export async function listBooksWithStats(
-  currentUserId: number | null,
+// The 서재 page is each user's own shelf — only books they registered or
+// reviewed, not the whole shared catalog (that's what /explore is for).
+// avg_rating/review_count still reflect everyone's reviews.
+export async function listMyBooksWithStats(
+  userId: number,
   opts: { search?: string; genre?: string } = {}
 ): Promise<BookWithStats[]> {
-  const clauses: string[] = [];
-  const args: (string | number)[] = [currentUserId ?? -1];
+  const clauses: string[] = [
+    `b.id IN (
+      SELECT book_id FROM reviews WHERE user_id = ?
+      UNION
+      SELECT id FROM books WHERE created_by = ?
+    )`,
+  ];
+  const args: (string | number)[] = [userId, userId, userId];
 
   if (opts.search) {
     clauses.push("(b.title LIKE ? OR b.author LIKE ?)");
@@ -41,7 +50,7 @@ export async function listBooksWithStats(
     args.push(opts.genre);
   }
 
-  const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+  const where = `WHERE ${clauses.join(" AND ")}`;
 
   const db = await getDb();
   const result = await db.execute({

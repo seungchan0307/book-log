@@ -11,16 +11,22 @@ export default function SignupForm() {
   return (
     <form action={action} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
-          이메일
+        <label htmlFor="username" className="text-sm font-medium">
+          아이디
         </label>
         <input
-          id="email"
-          name="email"
-          type="email"
+          id="username"
+          name="username"
+          type="text"
           required
+          minLength={3}
+          maxLength={20}
+          pattern="[a-zA-Z0-9_]+"
           className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
         />
+        <span className="text-xs text-muted">
+          영문/숫자/밑줄(_)로 3~20자로 입력해주세요.
+        </span>
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="nickname" className="text-sm font-medium">

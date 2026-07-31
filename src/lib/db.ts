@@ -26,7 +26,7 @@ async function initSchema(client: Client) {
     [
       `CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE NOT NULL,
         nickname TEXT NOT NULL,
         password_hash TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -97,6 +97,14 @@ async function initSchema(client: Client) {
     );
   } catch {
     // column already exists
+  }
+
+  // Migration guard: users switched from email-based login to a plain
+  // username, so rename the existing column instead of losing accounts.
+  try {
+    await client.execute("ALTER TABLE users RENAME COLUMN email TO username");
+  } catch {
+    // column already renamed (or table was created fresh with username)
   }
 
   // Migration guard: reviews.rating started as INTEGER (whole stars only).
