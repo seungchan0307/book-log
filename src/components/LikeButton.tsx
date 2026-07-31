@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { toggleReviewLike } from "@/app/actions/reviews";
 
 export default function LikeButton({
@@ -16,16 +16,22 @@ export default function LikeButton({
 }) {
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
-  const [isPending, startTransition] = useTransition();
+  // useTransition's isPending doesn't reliably stay true for the duration of
+  // an awaited async transition callback, so a fast second click could slip
+  // through and fire an overlapping request. Guard with a plain ref instead.
+  const isBusyRef = useRef(false);
+  const [isBusy, setIsBusy] = useState(false);
 
-  function handleClick() {
-    if (!isLoggedIn || isPending) return;
+  async function handleClick() {
+    if (!isLoggedIn || isBusyRef.current) return;
+    isBusyRef.current = true;
+    setIsBusy(true);
 
     const nextLiked = !liked;
     setLiked(nextLiked);
     setCount((c) => c + (nextLiked ? 1 : -1));
 
-    startTransition(async () => {
+    try {
       const result = await toggleReviewLike(reviewId);
       if ("error" in result) {
         setLiked(!nextLiked);
@@ -34,23 +40,28 @@ export default function LikeButton({
       }
       setLiked(result.liked);
       setCount(result.likeCount);
-    });
+    } finally {
+      isBusyRef.current = false;
+      setIsBusy(false);
+    }
   }
 
   return (
     <button
       type="button"
       onClick={handleClick}
-      disabled={!isLoggedIn || isPending}
+      disabled={!isLoggedIn || isBusy}
       aria-pressed={liked}
       aria-label={liked ? "좋아요 취소" : "좋아요"}
       title={isLoggedIn ? undefined : "로그인하면 좋아요를 남길 수 있어요"}
-      className={`flex items-center gap-1 text-xs transition-colors disabled:cursor-default ${
-        liked ? "text-red-500" : "text-muted"
-      } ${isLoggedIn ? "hover:text-red-500" : ""}`}
+      className={`flex h-10 min-w-10 flex-col items-center justify-center gap-0.5 rounded-md border text-xs transition-colors disabled:cursor-default ${
+        liked
+          ? "border-red-300 bg-red-50 text-red-500"
+          : "border-border text-muted"
+      } ${isLoggedIn ? "hover:border-red-300 hover:text-red-500" : ""}`}
     >
-      <span>{liked ? "♥" : "♡"}</span>
-      <span>{count}</span>
+      <span className="text-base leading-none">{liked ? "♥" : "♡"}</span>
+      <span className="text-[10px] leading-none">{count}</span>
     </button>
   );
 }

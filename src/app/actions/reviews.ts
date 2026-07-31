@@ -122,18 +122,18 @@ export async function toggleReviewLike(
     return { error: "존재하지 않는 감상입니다." };
   }
 
-  const existing = await db.execute({
-    sql: "SELECT 1 FROM review_likes WHERE user_id = ? AND review_id = ?",
+  // INSERT ... ON CONFLICT DO NOTHING instead of SELECT-then-branch: two
+  // overlapping toggles (a fast double click) can no longer both see "not
+  // liked yet" and both try to INSERT, which used to throw on the second
+  // one and leave the button's local state stuck out of sync.
+  const inserted = await db.execute({
+    sql: `INSERT INTO review_likes (user_id, review_id) VALUES (?, ?)
+          ON CONFLICT(user_id, review_id) DO NOTHING`,
     args: [user.id, reviewId],
   });
-  const liked = existing.rows.length === 0;
+  const liked = inserted.rowsAffected > 0;
 
-  if (liked) {
-    await db.execute({
-      sql: "INSERT INTO review_likes (user_id, review_id) VALUES (?, ?)",
-      args: [user.id, reviewId],
-    });
-  } else {
+  if (!liked) {
     await db.execute({
       sql: "DELETE FROM review_likes WHERE user_id = ? AND review_id = ?",
       args: [user.id, reviewId],

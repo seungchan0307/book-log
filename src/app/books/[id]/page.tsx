@@ -8,7 +8,7 @@ import {
 } from "@/lib/data";
 import { StarDisplay } from "@/components/StarRating";
 import BookDetailActions from "@/components/BookDetailActions";
-import LikeButton from "@/components/LikeButton";
+import PublicReviewList from "@/components/PublicReviewList";
 
 export default async function BookDetailPage({
   params,
@@ -110,40 +110,7 @@ export default async function BookDetailPage({
         <h2 className="text-lg font-bold">
           다른 독자들의 감상 ({publicReviews.length})
         </h2>
-        {publicReviews.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-            아직 공개된 감상평이 없어요. 이 책을 읽었다면 감상을 가장 먼저
-            남겨보세요.
-          </p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {publicReviews.map((r) => (
-              <li
-                key={r.id}
-                className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{r.reviewer_nickname}</span>
-                  <StarDisplay rating={r.rating} />
-                </div>
-                {r.content && (
-                  <p className="whitespace-pre-wrap text-sm">{r.content}</p>
-                )}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted">
-                    {r.updated_at.slice(0, 10)}
-                  </span>
-                  <LikeButton
-                    reviewId={r.id}
-                    initialLiked={r.liked_by_me === 1}
-                    initialCount={r.like_count}
-                    isLoggedIn={Boolean(user)}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+        <PublicReviewList reviews={publicReviews} isLoggedIn={Boolean(user)} />
       </section>
 
       {book.purchase_url && (
