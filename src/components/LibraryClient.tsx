@@ -24,6 +24,7 @@ export default function LibraryClient({
   const [reviewTarget, setReviewTarget] = useState<BookWithStats | null>(
     null
   );
+  const [pickedCover, setPickedCover] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return books.filter((b) => {
@@ -41,9 +42,19 @@ export default function LibraryClient({
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">서재</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold">서재</h1>
+          {pickedCover && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={pickedCover}
+              alt="선택한 책 표지"
+              className="h-28 w-20 rounded-md object-cover shadow-md"
+            />
+          )}
+        </div>
         {isLoggedIn ? (
-          <AddBookForm />
+          <AddBookForm onCoverChange={setPickedCover} />
         ) : (
           <p className="text-sm text-muted">
             로그인하면 책을 등록하고 감상을 남길 수 있어요.
