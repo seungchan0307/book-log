@@ -37,6 +37,9 @@ export default async function Navbar() {
           </div>
           {user ? (
             <>
+              <span className="text-border" aria-hidden="true">
+                /
+              </span>
               <Link
                 href="/profile"
                 className="font-bold text-foreground hover:text-accent"
