@@ -42,10 +42,19 @@ export async function listMyBooksWithStats(
       SELECT book_id FROM reviews WHERE user_id = ?
       UNION
       SELECT id FROM books WHERE created_by = ?
+      UNION
+      SELECT book_id FROM reading_status WHERE user_id = ?
     )`,
     `b.id NOT IN (SELECT book_id FROM library_hidden WHERE user_id = ?)`,
   ];
-  const args: (string | number)[] = [userId, userId, userId, userId, userId];
+  const args: (string | number)[] = [
+    userId,
+    userId,
+    userId,
+    userId,
+    userId,
+    userId,
+  ];
 
   if (opts.search) {
     clauses.push("(b.title LIKE ? OR b.author LIKE ?)");
@@ -81,12 +90,13 @@ export async function isBookInMyLibrary(
             AND (
               EXISTS(SELECT 1 FROM reviews r WHERE r.book_id = b.id AND r.user_id = ?)
               OR b.created_by = ?
+              OR EXISTS(SELECT 1 FROM reading_status rs WHERE rs.book_id = b.id AND rs.user_id = ?)
             )
             AND NOT EXISTS(
               SELECT 1 FROM library_hidden lh
               WHERE lh.book_id = b.id AND lh.user_id = ?
             )`,
-    args: [bookId, userId, userId, userId],
+    args: [bookId, userId, userId, userId, userId],
   });
   return result.rows.length > 0;
 }

@@ -8,7 +8,22 @@ import GenreSelect from "@/components/GenreSelect";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
 import { deleteReview } from "@/app/actions/reviews";
-import type { BookWithStats, ReviewWithBook } from "@/lib/types";
+import type {
+  BookReadingStatus,
+  BookWithStats,
+  ReviewWithBook,
+} from "@/lib/types";
+
+const READING_STATUS_LABELS: Record<BookReadingStatus, string> = {
+  finished: "읽은 책",
+  reading: "읽는 중",
+  want_to_read: "읽을 예정",
+};
+const READING_STATUS_ORDER: BookReadingStatus[] = [
+  "finished",
+  "reading",
+  "want_to_read",
+];
 
 export default function LibraryClient({
   books,
@@ -36,6 +51,20 @@ export default function LibraryClient({
       return true;
     });
   }, [books, search, genre]);
+
+  // Books registered before the reading-status feature existed have no
+  // my_reading_status — they all carry a review, so treat that gap as 읽은 책.
+  const grouped = useMemo(() => {
+    const groups: Record<BookReadingStatus, BookWithStats[]> = {
+      finished: [],
+      reading: [],
+      want_to_read: [],
+    };
+    for (const book of filtered) {
+      groups[book.my_reading_status ?? "finished"].push(book);
+    }
+    return groups;
+  }, [filtered]);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
@@ -93,16 +122,29 @@ export default function LibraryClient({
                 : "조건에 맞는 책이 없어요."}
             </p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {filtered.map((book) => (
-                <BookCard
-                  key={book.id}
-                  book={book}
-                  isLoggedIn
-                  onReview={setReviewTarget}
-                  canRemove
-                />
-              ))}
+            <div className="flex flex-col gap-6">
+              {READING_STATUS_ORDER.map((status) => {
+                const statusBooks = grouped[status];
+                if (statusBooks.length === 0) return null;
+                return (
+                  <div key={status} className="flex flex-col gap-3">
+                    <h3 className="text-sm font-semibold text-muted">
+                      {READING_STATUS_LABELS[status]} ({statusBooks.length})
+                    </h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {statusBooks.map((book) => (
+                        <BookCard
+                          key={book.id}
+                          book={book}
+                          isLoggedIn
+                          onReview={setReviewTarget}
+                          canRemove
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </>
