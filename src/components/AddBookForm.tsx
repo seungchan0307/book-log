@@ -9,6 +9,7 @@ import {
 import { GENRES } from "@/lib/genres";
 import GenreSelect from "@/components/GenreSelect";
 import { StarPicker } from "@/components/StarRating";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 import type { AladinBookResult } from "@/lib/aladin";
 
 const initialState: BookFormState = {};
@@ -65,18 +66,27 @@ export default function AddBookForm({
     }
   }, [state, onOpenChange]);
 
-  function runSearch() {
-    setSearchError(null);
+  // Live search: results update as the user types, debounced so every
+  // keystroke doesn't fire its own request.
+  const debouncedQuery = useDebouncedValue(searchQuery, 400);
+  useEffect(() => {
     startSearch(async () => {
-      const result = await searchAladinBooks(searchQuery);
+      const q = debouncedQuery.trim();
+      if (!q) {
+        setSearchResults([]);
+        setSearchError(null);
+        return;
+      }
+      const result = await searchAladinBooks(debouncedQuery);
       if ("error" in result) {
         setSearchError(result.error);
         setSearchResults([]);
         return;
       }
+      setSearchError(null);
       setSearchResults(result.results);
     });
-  }
+  }, [debouncedQuery]);
 
   function pickResult(book: AladinBookResult) {
     setFields({
@@ -108,9 +118,15 @@ export default function AddBookForm({
         if (!resolvedGenre) {
           e.preventDefault();
           setClientError("장르를 선택하거나 직접 입력해주세요.");
-        } else {
-          setClientError(null);
+          return;
         }
+        const rating = Number(new FormData(e.currentTarget).get("rating"));
+        if (!rating || rating <= 0) {
+          e.preventDefault();
+          setClientError("평점을 선택해주세요.");
+          return;
+        }
+        setClientError(null);
       }}
       className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
     >
@@ -127,28 +143,13 @@ export default function AddBookForm({
 
       <div className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3">
         <span className="text-sm font-medium">책 찾기</span>
-        <div className="flex gap-2">
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                runSearch();
-              }
-            }}
-            placeholder="책 제목으로 검색"
-            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-          <button
-            type="button"
-            onClick={runSearch}
-            disabled={isSearching || !searchQuery.trim()}
-            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-background disabled:opacity-50"
-          >
-            {isSearching ? "검색 중..." : "검색"}
-          </button>
-        </div>
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="책 제목으로 검색"
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+        />
+        {isSearching && <p className="text-xs text-muted">검색 중...</p>}
         {searchError && <p className="text-sm text-red-600">{searchError}</p>}
         {searchResults.length > 0 && (
           <ul className="flex max-h-56 flex-col gap-2 overflow-y-auto">
@@ -239,7 +240,7 @@ export default function AddBookForm({
 
       <div className="flex flex-col gap-3 border-t border-border pt-3">
         <div>
-          <span className="mb-1 block text-sm font-medium">평점</span>
+          <span className="mb-1 block text-sm font-medium">평점 *</span>
           <StarPicker name="rating" />
         </div>
         <div className="flex flex-col gap-1">

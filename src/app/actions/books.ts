@@ -139,13 +139,12 @@ export async function addBookWithReview(
   }
   const rating = ratingRaw ? Number(ratingRaw) : 0;
   if (
-    rating !== 0 &&
-    (!Number.isFinite(rating) ||
-      rating < 0.5 ||
-      rating > 5 ||
-      !Number.isInteger(rating * 2))
+    !Number.isFinite(rating) ||
+    rating < 0.5 ||
+    rating > 5 ||
+    !Number.isInteger(rating * 2)
   ) {
-    return { error: "평점은 0.5~5점 사이에서 0.5점 단위로 선택해주세요." };
+    return { error: "평점을 선택해주세요." };
   }
   if (content.length > 4000) {
     return { error: "감상평은 4000자 이내로 작성해주세요." };
@@ -188,16 +187,14 @@ export async function addBookWithReview(
     bookId = Number(inserted.lastInsertRowid);
   }
 
-  if (rating > 0) {
-    await db.execute({
-      sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(book_id, user_id)
-            DO UPDATE SET rating = excluded.rating, content = excluded.content,
-              is_public = excluded.is_public, updated_at = datetime('now')`,
-      args: [bookId, user.id, rating, content || null, isPublic],
-    });
-  }
+  await db.execute({
+    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(book_id, user_id)
+          DO UPDATE SET rating = excluded.rating, content = excluded.content,
+            is_public = excluded.is_public, updated_at = datetime('now')`,
+    args: [bookId, user.id, rating, content || null, isPublic],
+  });
 
   // Registering (or re-registering) a book is an explicit "put this back on
   // my shelf" — undo any earlier 서재에서 삭제 for it.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/app/actions/books";
 import GenreSelect from "@/components/GenreSelect";
 import { StarDisplay } from "@/components/StarRating";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 import type { AladinBookResult } from "@/lib/aladin";
 import type { BookWithStats } from "@/lib/types";
 
@@ -22,10 +23,11 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
   const [openingIsbn, setOpeningIsbn] = useState<string | null>(null);
 
   // Already-registered books filter live as you type; searching the wider
-  // Aladin catalog needs a network call, triggered by the same search box.
+  // Aladin catalog needs a network call, debounced off the same search box.
   const filtered = useMemo(() => {
     return books
       .filter((b) => {
+        if (b.avg_rating === null) return false;
         if (genre && b.genre !== genre) return false;
         if (search) {
           const q = search.toLowerCase();
@@ -42,23 +44,25 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
       });
   }, [books, search, genre]);
 
-  function runAladinSearch() {
-    if (!search.trim()) {
-      setAladinResults([]);
-      setAladinError(null);
-      return;
-    }
-    setAladinError(null);
+  const debouncedSearch = useDebouncedValue(search, 400);
+  useEffect(() => {
     startSearch(async () => {
-      const result = await searchAladinForExplore(search);
+      const q = debouncedSearch.trim();
+      if (!q) {
+        setAladinResults([]);
+        setAladinError(null);
+        return;
+      }
+      const result = await searchAladinForExplore(debouncedSearch);
       if ("error" in result) {
         setAladinError(result.error);
         setAladinResults([]);
         return;
       }
+      setAladinError(null);
       setAladinResults(result.results);
     });
-  }
+  }, [debouncedSearch]);
 
   function openResult(book: AladinBookResult) {
     setOpeningIsbn(book.isbn);
@@ -86,23 +90,9 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              runAladinSearch();
-            }
-          }}
           placeholder="제목 또는 저자로 검색"
           className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
         />
-        <button
-          type="button"
-          onClick={runAladinSearch}
-          disabled={isSearching || !search.trim()}
-          className="rounded-md border border-border px-3 py-2 text-sm hover:bg-card disabled:opacity-50"
-        >
-          {isSearching ? "검색 중..." : "검색"}
-        </button>
         <div className="w-48">
           <GenreSelect
             value={genre}
@@ -113,6 +103,9 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
         </div>
       </div>
 
+      {isSearching && !openingIsbn && (
+        <p className="text-xs text-muted">검색 중...</p>
+      )}
       {aladinError && <p className="text-sm text-red-600">{aladinError}</p>}
       {aladinResults.length > 0 && (
         <div className="flex flex-col gap-2">
