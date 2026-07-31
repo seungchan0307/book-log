@@ -80,6 +80,14 @@ async function initSchema(client: Client) {
         link TEXT,
         cached_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
+      // "서재에서 삭제" hides a book from one user's library grid without
+      // touching the shared book row or anyone's review (including their own,
+      // unless they also opt into deleting it).
+      `CREATE TABLE IF NOT EXISTS library_hidden (
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+        PRIMARY KEY (user_id, book_id)
+      )`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_book_id ON reviews(book_id)`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`,

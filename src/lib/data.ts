@@ -37,8 +37,9 @@ export async function listMyBooksWithStats(
       UNION
       SELECT id FROM books WHERE created_by = ?
     )`,
+    `b.id NOT IN (SELECT book_id FROM library_hidden WHERE user_id = ?)`,
   ];
-  const args: (string | number)[] = [userId, userId, userId];
+  const args: (string | number)[] = [userId, userId, userId, userId];
 
   if (opts.search) {
     clauses.push("(b.title LIKE ? OR b.author LIKE ?)");

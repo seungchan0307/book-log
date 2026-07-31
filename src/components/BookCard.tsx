@@ -22,15 +22,12 @@ export default function BookCard({
   const [isRemoving, startRemove] = useTransition();
 
   function handleRemove() {
-    if (
-      !window.confirm(
-        "내 서재에서 삭제하시겠습니까? 내가 남긴 감상만 사라지고, 책 자체와 다른 사람의 감상은 그대로 유지돼요."
-      )
-    ) {
-      return;
-    }
+    if (!window.confirm("내 서재에서 삭제하시겠습니까?")) return;
+    const deleteReviewToo = window.confirm(
+      "남긴 감상도 함께 삭제할까요? (취소하면 감상은 그대로 남아요)"
+    );
     startRemove(async () => {
-      await removeFromMyLibrary(book.id);
+      await removeFromMyLibrary(book.id, deleteReviewToo);
       router.refresh();
     });
   }

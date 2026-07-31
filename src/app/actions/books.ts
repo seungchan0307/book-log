@@ -135,28 +135,42 @@ export async function addBookWithReview(
     });
   }
 
+  // Registering (or re-registering) a book is an explicit "put this back on
+  // my shelf" — undo any earlier 서재에서 삭제 for it.
+  await db.execute({
+    sql: "DELETE FROM library_hidden WHERE user_id = ? AND book_id = ?",
+    args: [user.id, bookId],
+  });
+
   revalidatePath("/library");
   revalidatePath("/recommend");
   revalidatePath(`/books/${bookId}`);
   return { success: true };
 }
 
-// Removes a book from *my* library only: my review on it (if any) and my
-// claim to having registered it. The book itself and everyone else's
-// reviews are untouched — it's a shared row, not mine to delete outright.
-export async function removeFromMyLibrary(bookId: number) {
+// Removes a book from *my* library grid only — the book itself and my
+// review both stay intact unless deleteReviewToo is set, since hiding it
+// from my shelf and deleting my review are separate decisions.
+export async function removeFromMyLibrary(
+  bookId: number,
+  deleteReviewToo: boolean
+) {
   const user = await getCurrentUser();
   if (!user) return;
 
   const db = await getDb();
   await db.execute({
-    sql: "DELETE FROM reviews WHERE book_id = ? AND user_id = ?",
-    args: [bookId, user.id],
+    sql: `INSERT INTO library_hidden (user_id, book_id) VALUES (?, ?)
+          ON CONFLICT(user_id, book_id) DO NOTHING`,
+    args: [user.id, bookId],
   });
-  await db.execute({
-    sql: "UPDATE books SET created_by = NULL WHERE id = ? AND created_by = ?",
-    args: [bookId, user.id],
-  });
+
+  if (deleteReviewToo) {
+    await db.execute({
+      sql: "DELETE FROM reviews WHERE book_id = ? AND user_id = ?",
+      args: [bookId, user.id],
+    });
+  }
 
   revalidatePath("/library");
   revalidatePath("/recommend");
