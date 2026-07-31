@@ -10,6 +10,9 @@ import type {
   ReviewWithBook,
 } from "@/lib/types";
 
+// Two placeholders for the current user: one for the reading_status
+// subquery (textually first, since it's in the SELECT list before FROM),
+// one for the "my" reviews join. Every caller passes the same user id twice.
 const BOOK_STATS_SELECT = `
   SELECT
     b.id, b.title, b.author, b.genre, b.cover_url, b.description,
@@ -19,7 +22,9 @@ const BOOK_STATS_SELECT = `
     my.rating AS my_rating,
     my.content AS my_review_content,
     my.is_public AS my_review_is_public,
-    my.is_anonymous AS my_review_is_anonymous
+    my.is_anonymous AS my_review_is_anonymous,
+    (SELECT rs.status FROM reading_status rs
+      WHERE rs.book_id = b.id AND rs.user_id = ?) AS my_reading_status
   FROM books b
   LEFT JOIN reviews r ON r.book_id = b.id
   LEFT JOIN reviews my ON my.book_id = b.id AND my.user_id = ?
@@ -40,7 +45,7 @@ export async function listMyBooksWithStats(
     )`,
     `b.id NOT IN (SELECT book_id FROM library_hidden WHERE user_id = ?)`,
   ];
-  const args: (string | number)[] = [userId, userId, userId, userId];
+  const args: (string | number)[] = [userId, userId, userId, userId, userId];
 
   if (opts.search) {
     clauses.push("(b.title LIKE ? OR b.author LIKE ?)");
@@ -93,7 +98,7 @@ export async function getBookWithStats(
   const db = await getDb();
   const result = await db.execute({
     sql: `${BOOK_STATS_SELECT} WHERE b.id = ? GROUP BY b.id`,
-    args: [currentUserId ?? -1, bookId],
+    args: [currentUserId ?? -1, currentUserId ?? -1, bookId],
   });
   return rowsToObjects<BookWithStats>(result)[0] ?? null;
 }
@@ -140,7 +145,7 @@ export async function searchBooksForExplore(
   currentUserId: number | null,
   search: string
 ): Promise<BookWithStats[]> {
-  const args: (string | number)[] = [currentUserId ?? -1];
+  const args: (string | number)[] = [currentUserId ?? -1, currentUserId ?? -1];
   let where = "";
   if (search) {
     where = "WHERE (b.title LIKE ? OR b.author LIKE ?)";
@@ -180,7 +185,7 @@ export async function getMostViewedBooks(
           HAVING b.view_count > 0
           ORDER BY b.view_count DESC, review_count DESC
           LIMIT ?`,
-    args: [currentUserId ?? -1, limit],
+    args: [currentUserId ?? -1, currentUserId ?? -1, limit],
   });
   return rowsToObjects<BookWithStats>(result);
 }
@@ -200,7 +205,7 @@ export async function getTopRatedBooks(
           HAVING review_count >= ?
           ORDER BY avg_rating DESC, review_count DESC
           LIMIT ?`,
-    args: [currentUserId ?? -1, minReviews, limit],
+    args: [currentUserId ?? -1, currentUserId ?? -1, minReviews, limit],
   });
   return rowsToObjects<BookWithStats>(result);
 }
@@ -280,6 +285,7 @@ export async function getPersonalizedRecommendations(
           ORDER BY avg_rating DESC, review_count DESC
           LIMIT ?`,
     args: [
+      userId,
       userId,
       ...favoriteGenres.map((g) => g.genre),
       userId,

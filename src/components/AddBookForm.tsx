@@ -22,6 +22,14 @@ const emptyFields = {
   isbn: "",
 };
 
+type ReadingStatus = "finished" | "reading" | "want_to_read";
+
+const READING_STATUS_LABELS: Record<ReadingStatus, string> = {
+  finished: "다 읽음",
+  reading: "읽는 중",
+  want_to_read: "읽을 예정",
+};
+
 export default function AddBookForm({
   onOpenChange,
 }: {
@@ -44,6 +52,22 @@ export default function AddBookForm({
   // successful submit clears the rating/review, not just the text fields.
   const [resetKey, setResetKey] = useState(0);
   const [clientError, setClientError] = useState<string | null>(null);
+  const [readingStatus, setReadingStatusState] =
+    useState<ReadingStatus>("finished");
+  const [wantsReviewWhileReading, setWantsReviewWhileReading] =
+    useState(false);
+
+  function setReadingStatus(status: ReadingStatus) {
+    setReadingStatusState(status);
+    setWantsReviewWhileReading(false);
+  }
+
+  // finished always shows the review section; reading only shows it once
+  // the user opts in via the "그래도 감상평을 남기시겠어요?" checkbox;
+  // want_to_read never does (nothing to review yet).
+  const showReviewSection =
+    readingStatus === "finished" ||
+    (readingStatus === "reading" && wantsReviewWhileReading);
 
   // Clearing the form fields is this component's own state, adjusted during
   // its own render. Closing the panel is a side effect on the parent, so
@@ -56,6 +80,7 @@ export default function AddBookForm({
       setCustomGenre("");
       setSearchResults([]);
       setSearchQuery("");
+      setReadingStatus("finished");
       setResetKey((k) => k + 1);
     }
   }
@@ -120,11 +145,13 @@ export default function AddBookForm({
           setClientError("장르를 선택하거나 직접 입력해주세요.");
           return;
         }
-        const rating = Number(new FormData(e.currentTarget).get("rating"));
-        if (!rating || rating <= 0) {
-          e.preventDefault();
-          setClientError("평점을 선택해주세요.");
-          return;
+        if (showReviewSection) {
+          const rating = Number(new FormData(e.currentTarget).get("rating"));
+          if (!rating || rating <= 0) {
+            e.preventDefault();
+            setClientError("평점을 선택해주세요.");
+            return;
+          }
         }
         setClientError(null);
       }}
@@ -238,41 +265,78 @@ export default function AddBookForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 border-t border-border pt-3">
-        <div>
-          <span className="mb-1 block text-sm font-medium">평점 *</span>
-          <StarPicker name="rating" />
+      <div className="flex flex-col gap-1 border-t border-border pt-3">
+        <span className="text-sm font-medium">읽기 상태 *</span>
+        <input type="hidden" name="reading_status" value={readingStatus} />
+        <div className="flex gap-2">
+          {(Object.keys(READING_STATUS_LABELS) as ReadingStatus[]).map(
+            (status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setReadingStatus(status)}
+                className={`rounded-md border px-3 py-1.5 text-sm ${
+                  readingStatus === status
+                    ? "border-accent bg-accent text-accent-foreground"
+                    : "border-border hover:bg-background"
+                }`}
+              >
+                {READING_STATUS_LABELS[status]}
+              </button>
+            )
+          )}
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="content" className="text-sm font-medium">
-            감상평 (선택)
-          </label>
-          <textarea
-            id="content"
-            name="content"
-            rows={10}
-            placeholder="감상평 없이 평점만 남겨도 돼요"
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-          />
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="is_public"
-            defaultChecked
-            className="h-4 w-4 accent-accent"
-          />
-          다른 사람에게 감상평 공개하기
-        </label>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            name="is_anonymous"
-            className="h-4 w-4 accent-accent"
-          />
-          익명으로 작성하기 (닉네임 대신 &quot;익명&quot;으로 표시돼요)
-        </label>
       </div>
+
+      {readingStatus === "reading" && (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={wantsReviewWhileReading}
+            onChange={(e) => setWantsReviewWhileReading(e.target.checked)}
+            className="h-4 w-4 accent-accent"
+          />
+          아직 읽는 중이신데, 그래도 감상평을 남기시겠어요?
+        </label>
+      )}
+
+      {showReviewSection && (
+        <div className="flex flex-col gap-3 border-t border-border pt-3">
+          <div>
+            <span className="mb-1 block text-sm font-medium">평점 *</span>
+            <StarPicker name="rating" />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="content" className="text-sm font-medium">
+              감상평 (선택)
+            </label>
+            <textarea
+              id="content"
+              name="content"
+              rows={10}
+              placeholder="감상평 없이 평점만 남겨도 돼요"
+              className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="is_public"
+              defaultChecked
+              className="h-4 w-4 accent-accent"
+            />
+            다른 사람에게 감상평 공개하기
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="is_anonymous"
+              className="h-4 w-4 accent-accent"
+            />
+            익명으로 작성하기 (닉네임 대신 &quot;익명&quot;으로 표시돼요)
+          </label>
+        </div>
+      )}
 
       {(clientError || state.error) && (
         <p className="text-sm text-red-600">{clientError || state.error}</p>

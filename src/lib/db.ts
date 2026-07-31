@@ -96,6 +96,16 @@ async function initSchema(client: Client) {
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         PRIMARY KEY (user_id, review_id)
       )`,
+      // Separate from reviews since 읽는 중 / 읽을 예정 don't have a rating —
+      // reviews.rating stays NOT NULL and only real reviews live there.
+      `CREATE TABLE IF NOT EXISTS reading_status (
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+        status TEXT NOT NULL CHECK (status IN ('finished', 'reading', 'want_to_read')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, book_id)
+      )`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_book_id ON reviews(book_id)`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`,

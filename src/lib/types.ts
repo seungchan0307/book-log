@@ -18,6 +18,8 @@ export type Book = {
   created_at: string;
 };
 
+export type BookReadingStatus = "finished" | "reading" | "want_to_read";
+
 export type BookWithStats = Book & {
   avg_rating: number | null;
   review_count: number;
@@ -25,6 +27,7 @@ export type BookWithStats = Book & {
   my_review_content: string | null;
   my_review_is_public: number | null;
   my_review_is_anonymous: number | null;
+  my_reading_status: BookReadingStatus | null;
 };
 
 export type Review = {

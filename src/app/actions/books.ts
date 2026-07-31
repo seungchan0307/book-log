@@ -119,6 +119,11 @@ export async function addBookWithReview(
   const content = String(formData.get("content") ?? "").trim();
   const isPublic = formData.get("is_public") ? 1 : 0;
   const isAnonymous = formData.get("is_anonymous") ? 1 : 0;
+  const readingStatusRaw = String(formData.get("reading_status") ?? "").trim();
+  const readingStatus: "finished" | "reading" | "want_to_read" =
+    readingStatusRaw === "reading" || readingStatusRaw === "want_to_read"
+      ? readingStatusRaw
+      : "finished";
 
   if (title.length < 1 || title.length > 200) {
     return { error: "제목을 1~200자로 입력해주세요." };
@@ -139,13 +144,22 @@ export async function addBookWithReview(
     return { error: "구매 링크는 http(s)로 시작해야 합니다." };
   }
   const rating = ratingRaw ? Number(ratingRaw) : 0;
-  if (
-    !Number.isFinite(rating) ||
-    rating < 0.5 ||
-    rating > 5 ||
-    !Number.isInteger(rating * 2)
+  // 다 읽은 책은 평점이 필수. 읽는 중/읽을 예정은 아직 감상을 남길 단계가
+  // 아니라서 평점이 선택이지만, 그래도 남기기로 했다면 형식은 유효해야 함.
+  if (readingStatus === "finished") {
+    if (
+      !Number.isFinite(rating) ||
+      rating < 0.5 ||
+      rating > 5 ||
+      !Number.isInteger(rating * 2)
+    ) {
+      return { error: "평점을 선택해주세요." };
+    }
+  } else if (
+    rating !== 0 &&
+    (rating < 0.5 || rating > 5 || !Number.isInteger(rating * 2))
   ) {
-    return { error: "평점을 선택해주세요." };
+    return { error: "평점은 0.5~5점 사이에서 0.5점 단위로 선택해주세요." };
   }
   if (content.length > 4000) {
     return { error: "감상평은 4000자 이내로 작성해주세요." };
@@ -188,14 +202,25 @@ export async function addBookWithReview(
     bookId = Number(inserted.lastInsertRowid);
   }
 
+  // want_to_read never carries a review even if a stray rating slipped
+  // through; reading only inserts one if the user opted in.
+  if (rating > 0 && readingStatus !== "want_to_read") {
+    await db.execute({
+      sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public, is_anonymous)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(book_id, user_id)
+            DO UPDATE SET rating = excluded.rating, content = excluded.content,
+              is_public = excluded.is_public, is_anonymous = excluded.is_anonymous,
+              updated_at = datetime('now')`,
+      args: [bookId, user.id, rating, content || null, isPublic, isAnonymous],
+    });
+  }
+
   await db.execute({
-    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public, is_anonymous)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT(book_id, user_id)
-          DO UPDATE SET rating = excluded.rating, content = excluded.content,
-            is_public = excluded.is_public, is_anonymous = excluded.is_anonymous,
-            updated_at = datetime('now')`,
-    args: [bookId, user.id, rating, content || null, isPublic, isAnonymous],
+    sql: `INSERT INTO reading_status (user_id, book_id, status) VALUES (?, ?, ?)
+          ON CONFLICT(user_id, book_id)
+          DO UPDATE SET status = excluded.status, updated_at = datetime('now')`,
+    args: [user.id, bookId, readingStatus],
   });
 
   // Registering (or re-registering) a book is an explicit "put this back on
