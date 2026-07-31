@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import {
   addBookWithReview,
   searchAladinBooks,
@@ -21,8 +21,11 @@ const emptyFields = {
   isbn: "",
 };
 
-export default function AddBookForm() {
-  const [open, setOpen] = useState(false);
+export default function AddBookForm({
+  onOpenChange,
+}: {
+  onOpenChange: (open: boolean) => void;
+}) {
   const [state, action, pending] = useActionState(
     addBookWithReview,
     initialState
@@ -40,11 +43,12 @@ export default function AddBookForm() {
   // successful submit clears the rating/review, not just the text fields.
   const [resetKey, setResetKey] = useState(0);
 
-  // Closing on success clears the form fields for next time.
+  // Clearing the form fields is this component's own state, adjusted during
+  // its own render. Closing the panel is a side effect on the parent, so
+  // that part has to run in an effect instead.
   if (state !== handledState) {
     setHandledState(state);
     if (state.success) {
-      setOpen(false);
       setFields(emptyFields);
       setGenreChoice("");
       setCustomGenre("");
@@ -53,6 +57,12 @@ export default function AddBookForm() {
       setResetKey((k) => k + 1);
     }
   }
+
+  useEffect(() => {
+    if (state.success) {
+      onOpenChange(false);
+    }
+  }, [state, onOpenChange]);
 
   function runSearch() {
     setSearchError(null);
@@ -89,17 +99,6 @@ export default function AddBookForm() {
   const resolvedGenre =
     genreChoice === "기타" ? customGenre.trim() : genreChoice;
 
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        className="rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
-      >
-        + 책 등록하기
-      </button>
-    );
-  }
-
   return (
     <form
       key={resetKey}
@@ -110,10 +109,10 @@ export default function AddBookForm() {
         <h3 className="font-semibold">새 책 등록</h3>
         <button
           type="button"
-          onClick={() => setOpen(false)}
+          onClick={() => onOpenChange(false)}
           className="text-sm text-muted hover:text-foreground"
         >
-          닫기
+          서재로 돌아가기
         </button>
       </div>
 

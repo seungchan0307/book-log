@@ -24,6 +24,7 @@ export default function LibraryClient({
   const [reviewTarget, setReviewTarget] = useState<BookWithStats | null>(
     null
   );
+  const [addOpen, setAddOpen] = useState(false);
 
   const filtered = useMemo(() => {
     return books.filter((b) => {
@@ -41,9 +42,32 @@ export default function LibraryClient({
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
       <div className="flex flex-col gap-3">
-        <h1 className="text-2xl font-bold">서재</h1>
+        {addOpen ? (
+          <nav className="text-sm text-muted">
+            <button
+              type="button"
+              onClick={() => setAddOpen(false)}
+              className="hover:text-accent hover:underline"
+            >
+              서재
+            </button>
+            {" / "}
+            <span className="text-foreground">책 등록하기</span>
+          </nav>
+        ) : (
+          <h1 className="text-2xl font-bold">서재</h1>
+        )}
         {isLoggedIn ? (
-          <AddBookForm />
+          addOpen ? (
+            <AddBookForm onOpenChange={setAddOpen} />
+          ) : (
+            <button
+              onClick={() => setAddOpen(true)}
+              className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
+            >
+              + 책 등록하기
+            </button>
+          )
         ) : (
           <p className="text-sm text-muted">
             로그인하면 책을 등록하고 감상을 남길 수 있어요.
@@ -51,44 +75,48 @@ export default function LibraryClient({
         )}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="제목 또는 저자로 검색"
-          className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
-        />
-        <div className="w-48">
-          <GenreSelect
-            value={genre}
-            onChange={setGenre}
-            placeholder="장르로 검색"
-            clearLabel="전체 장르"
-          />
-        </div>
-      </div>
-
-      {filtered.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-8 text-center text-muted">
-          {books.length === 0
-            ? "아직 등록된 책이 없어요. 첫 책을 등록해보세요!"
-            : "조건에 맞는 책이 없어요."}
-        </p>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              isLoggedIn={isLoggedIn}
-              onReview={setReviewTarget}
-              canRemove={isLoggedIn}
+      {!addOpen && (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="제목 또는 저자로 검색"
+              className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
             />
-          ))}
-        </div>
+            <div className="w-48">
+              <GenreSelect
+                value={genre}
+                onChange={setGenre}
+                placeholder="장르로 검색"
+                clearLabel="전체 장르"
+              />
+            </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-border p-8 text-center text-muted">
+              {books.length === 0
+                ? "아직 등록된 책이 없어요. 첫 책을 등록해보세요!"
+                : "조건에 맞는 책이 없어요."}
+            </p>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {filtered.map((book) => (
+                <BookCard
+                  key={book.id}
+                  book={book}
+                  isLoggedIn={isLoggedIn}
+                  onReview={setReviewTarget}
+                  canRemove={isLoggedIn}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
-      {isLoggedIn && (
+      {!addOpen && isLoggedIn && (
         <div className="flex flex-col gap-3">
           <h2 className="text-xl font-bold">내가 남긴 감상</h2>
           {myReviews.length === 0 ? (
