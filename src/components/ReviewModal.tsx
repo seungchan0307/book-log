@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   deleteReviewForBook,
@@ -12,6 +12,10 @@ import type { BookWithStats } from "@/lib/types";
 
 const initialState: ReviewFormState = {};
 
+function draftKey(bookId: number) {
+  return `book-log:review-draft:${bookId}`;
+}
+
 export default function ReviewModal({
   book,
   onClose,
@@ -22,29 +26,37 @@ export default function ReviewModal({
   const router = useRouter();
   const [state, action, pending] = useActionState(upsertReview, initialState);
   const [isDeleting, startDelete] = useTransition();
+  // Falls back to a locally-saved draft so an accidental close (or
+  // navigating away) doesn't lose what was typed — only cleared once the
+  // review actually saves.
+  const [content, setContent] = useState(
+    () =>
+      window.localStorage.getItem(draftKey(book.id)) ??
+      book.my_review_content ??
+      ""
+  );
 
   // Notifying the parent to close is a side effect on another component, so
   // it must run in an effect rather than during ReviewModal's own render.
   useEffect(() => {
     if (state.success) {
+      window.localStorage.removeItem(draftKey(book.id));
       onClose();
     }
-  }, [state, onClose]);
+  }, [state, onClose, book.id]);
 
   function handleDelete() {
     if (!window.confirm("감상을 지우시겠습니까?")) return;
     startDelete(async () => {
       await deleteReviewForBook(book.id);
+      window.localStorage.removeItem(draftKey(book.id));
       router.refresh();
       onClose();
     });
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div
         className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-card p-5"
         onClick={(e) => e.stopPropagation()}
@@ -78,7 +90,11 @@ export default function ReviewModal({
               id="content"
               name="content"
               rows={12}
-              defaultValue={book.my_review_content ?? ""}
+              value={content}
+              onChange={(e) => {
+                setContent(e.target.value);
+                window.localStorage.setItem(draftKey(book.id), e.target.value);
+              }}
               placeholder="감상평 없이 평점만 남겨도 돼요"
               className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
             />

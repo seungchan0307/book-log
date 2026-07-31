@@ -28,7 +28,7 @@ export default async function Navbar() {
             <>
               <Link
                 href="/profile"
-                className="font-semibold text-muted hover:text-accent"
+                className="font-bold text-foreground hover:text-accent"
               >
                 {user.nickname}님
               </Link>
