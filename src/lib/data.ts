@@ -125,6 +125,41 @@ export async function searchBooksForExplore(
   return rowsToObjects<BookWithStats>(result);
 }
 
+export async function getMostViewedBooks(
+  currentUserId: number | null,
+  limit = 10
+): Promise<BookWithStats[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT}
+          GROUP BY b.id
+          HAVING b.view_count > 0
+          ORDER BY b.view_count DESC, review_count DESC
+          LIMIT ?`,
+    args: [currentUserId ?? -1, limit],
+  });
+  return rowsToObjects<BookWithStats>(result);
+}
+
+// minReviews keeps a single 5-star rating from one or two people out of the
+// top spot — a book needs a decent number of raters to qualify.
+export async function getTopRatedBooks(
+  currentUserId: number | null,
+  minReviews: number,
+  limit = 10
+): Promise<BookWithStats[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT}
+          GROUP BY b.id
+          HAVING review_count >= ?
+          ORDER BY avg_rating DESC, review_count DESC
+          LIMIT ?`,
+    args: [currentUserId ?? -1, minReviews, limit],
+  });
+  return rowsToObjects<BookWithStats>(result);
+}
+
 export async function incrementBookViewCount(bookId: number): Promise<void> {
   const db = await getDb();
   await db.execute({

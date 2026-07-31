@@ -37,6 +37,52 @@ function BookGrid({
   );
 }
 
+// A horizontally-scrolling, cover-forward row — meant to read as "책갈피가
+// 골라서 먼저 보여주는" curated picks, not a plain list.
+function BookPosterRow({
+  books,
+  metric,
+}: {
+  books: BookWithStats[];
+  metric: (book: BookWithStats) => React.ReactNode;
+}) {
+  if (books.length === 0) {
+    return (
+      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
+        아직 보여줄 책이 없어요.
+      </p>
+    );
+  }
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-2">
+      {books.map((book) => (
+        <Link
+          key={book.id}
+          href={`/books/${book.id}`}
+          className="flex w-32 shrink-0 flex-col gap-1.5"
+        >
+          <div className="flex h-44 w-32 items-center justify-center overflow-hidden rounded-lg bg-card text-3xl text-muted shadow-sm">
+            {book.cover_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={book.cover_url}
+                alt={book.title}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              "📖"
+            )}
+          </div>
+          <p className="line-clamp-2 text-sm font-medium leading-snug">
+            {book.title}
+          </p>
+          {metric(book)}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function PopularReviewList({ reviews }: { reviews: PopularReview[] }) {
   if (reviews.length === 0) {
     return (
@@ -84,11 +130,7 @@ function PopularReviewList({ reviews }: { reviews: PopularReview[] }) {
             {r.content && (
               <p className="whitespace-pre-wrap text-sm">{r.content}</p>
             )}
-            <div className="flex items-center gap-2 text-xs text-muted">
-              <span>{r.reviewer_nickname}</span>
-              <span>·</span>
-              <span>탐색 {r.book_view_count}회</span>
-            </div>
+            <span className="text-xs text-muted">{r.reviewer_nickname}</span>
           </div>
         </li>
       ))}
@@ -98,11 +140,15 @@ function PopularReviewList({ reviews }: { reviews: PopularReview[] }) {
 
 export default function RecommendClient({
   popularReviews,
+  mostViewed,
+  topRated,
   personalized,
   isLoggedIn,
   hasFavoriteGenres,
 }: {
   popularReviews: PopularReview[];
+  mostViewed: BookWithStats[];
+  topRated: BookWithStats[];
   personalized: BookWithStats[];
   isLoggedIn: boolean;
   hasFavoriteGenres: boolean;
@@ -116,9 +162,35 @@ export default function RecommendClient({
       <div>
         <h1 className="text-2xl font-bold">추천</h1>
         <p className="mt-1 text-muted">
-          다른 독자들이 많이 살펴본 감상평을 추천해드려요.
+          책갈피가 먼저 골라봤어요.
         </p>
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xl font-bold">지금 많이 찾는 책</h2>
+        <BookPosterRow
+          books={mostViewed}
+          metric={(book) => (
+            <span className="text-xs text-muted">
+              탐색 {book.view_count}회
+            </span>
+          )}
+        />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xl font-bold">평점 높은 책</h2>
+        <BookPosterRow
+          books={topRated}
+          metric={(book) => (
+            <StarDisplay
+              rating={book.avg_rating}
+              reviewCount={book.review_count}
+              size="text-sm"
+            />
+          )}
+        />
+      </section>
 
       {isLoggedIn ? (
         <section className="flex flex-col gap-3">
