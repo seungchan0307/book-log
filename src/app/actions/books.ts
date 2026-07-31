@@ -118,6 +118,7 @@ export async function addBookWithReview(
   const ratingRaw = String(formData.get("rating") ?? "").trim();
   const content = String(formData.get("content") ?? "").trim();
   const isPublic = formData.get("is_public") ? 1 : 0;
+  const isAnonymous = formData.get("is_anonymous") ? 1 : 0;
 
   if (title.length < 1 || title.length > 200) {
     return { error: "제목을 1~200자로 입력해주세요." };
@@ -188,12 +189,13 @@ export async function addBookWithReview(
   }
 
   await db.execute({
-    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public)
-          VALUES (?, ?, ?, ?, ?)
+    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public, is_anonymous)
+          VALUES (?, ?, ?, ?, ?, ?)
           ON CONFLICT(book_id, user_id)
           DO UPDATE SET rating = excluded.rating, content = excluded.content,
-            is_public = excluded.is_public, updated_at = datetime('now')`,
-    args: [bookId, user.id, rating, content || null, isPublic],
+            is_public = excluded.is_public, is_anonymous = excluded.is_anonymous,
+            updated_at = datetime('now')`,
+    args: [bookId, user.id, rating, content || null, isPublic, isAnonymous],
   });
 
   // Registering (or re-registering) a book is an explicit "put this back on

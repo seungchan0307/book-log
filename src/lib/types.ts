@@ -24,6 +24,7 @@ export type BookWithStats = Book & {
   my_rating: number | null;
   my_review_content: string | null;
   my_review_is_public: number | null;
+  my_review_is_anonymous: number | null;
 };
 
 export type Review = {
@@ -33,6 +34,7 @@ export type Review = {
   rating: number;
   content: string | null;
   is_public: number;
+  is_anonymous: number;
   created_at: string;
   updated_at: string;
 };

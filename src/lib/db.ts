@@ -57,6 +57,7 @@ async function initSchema(client: Client) {
         rating REAL NOT NULL CHECK (rating BETWEEN 0.5 AND 5 AND rating * 2 = CAST(rating * 2 AS INTEGER)),
         content TEXT,
         is_public INTEGER NOT NULL DEFAULT 1,
+        is_anonymous INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at TEXT NOT NULL DEFAULT (datetime('now')),
         UNIQUE (book_id, user_id)
@@ -120,6 +121,16 @@ async function initSchema(client: Client) {
   // existed in production, so CREATE TABLE IF NOT EXISTS above won't add it.
   try {
     await client.execute("ALTER TABLE users ADD COLUMN birthdate TEXT");
+  } catch {
+    // column already exists
+  }
+
+  // Migration guard: is_anonymous was added after the reviews table already
+  // existed in production, so CREATE TABLE IF NOT EXISTS above won't add it.
+  try {
+    await client.execute(
+      "ALTER TABLE reviews ADD COLUMN is_anonymous INTEGER NOT NULL DEFAULT 0"
+    );
   } catch {
     // column already exists
   }

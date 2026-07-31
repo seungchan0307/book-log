@@ -108,6 +108,15 @@ export default function ReviewModal({
             />
             다른 사람에게 감상평 공개하기
           </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="is_anonymous"
+              defaultChecked={book.my_review_is_anonymous === 1}
+              className="h-4 w-4 accent-accent"
+            />
+            익명으로 작성하기 (닉네임 대신 &quot;익명&quot;으로 표시돼요)
+          </label>
           {state.error && (
             <p className="text-sm text-red-600">{state.error}</p>
           )}

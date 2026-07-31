@@ -18,7 +18,8 @@ const BOOK_STATS_SELECT = `
     COUNT(r.id) AS review_count,
     my.rating AS my_rating,
     my.content AS my_review_content,
-    my.is_public AS my_review_is_public
+    my.is_public AS my_review_is_public,
+    my.is_anonymous AS my_review_is_anonymous
   FROM books b
   LEFT JOIN reviews r ON r.book_id = b.id
   LEFT JOIN reviews my ON my.book_id = b.id AND my.user_id = ?
@@ -79,7 +80,9 @@ export async function getPublicReviewsForBook(
 ): Promise<PublicReview[]> {
   const db = await getDb();
   const result = await db.execute({
-    sql: `SELECT rv.*, u.nickname AS reviewer_nickname
+    sql: `SELECT rv.*,
+                 CASE WHEN rv.is_anonymous = 1 THEN '익명' ELSE u.nickname END
+                   AS reviewer_nickname
           FROM reviews rv
           JOIN users u ON u.id = rv.user_id
           WHERE rv.book_id = ? AND rv.is_public = 1 AND rv.user_id != ?
@@ -183,7 +186,9 @@ export async function incrementBookViewCount(bookId: number): Promise<void> {
 export async function getPopularReviews(limit = 20): Promise<PopularReview[]> {
   const db = await getDb();
   const result = await db.execute({
-    sql: `SELECT rv.*, u.nickname AS reviewer_nickname,
+    sql: `SELECT rv.*,
+                 CASE WHEN rv.is_anonymous = 1 THEN '익명' ELSE u.nickname END
+                   AS reviewer_nickname,
                  b.title AS book_title, b.author AS book_author,
                  b.cover_url AS book_cover_url, b.view_count AS book_view_count
           FROM reviews rv

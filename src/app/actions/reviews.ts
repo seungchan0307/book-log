@@ -19,6 +19,7 @@ export async function upsertReview(
   const rating = Number(formData.get("rating"));
   const content = String(formData.get("content") ?? "").trim();
   const isPublic = formData.get("is_public") ? 1 : 0;
+  const isAnonymous = formData.get("is_anonymous") ? 1 : 0;
 
   if (!Number.isInteger(bookId) || bookId <= 0) {
     return { error: "잘못된 요청입니다." };
@@ -40,12 +41,13 @@ export async function upsertReview(
   }
 
   await db.execute({
-    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public)
-          VALUES (?, ?, ?, ?, ?)
+    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public, is_anonymous)
+          VALUES (?, ?, ?, ?, ?, ?)
           ON CONFLICT(book_id, user_id)
           DO UPDATE SET rating = excluded.rating, content = excluded.content,
-            is_public = excluded.is_public, updated_at = datetime('now')`,
-    args: [bookId, user.id, rating, content || null, isPublic],
+            is_public = excluded.is_public, is_anonymous = excluded.is_anonymous,
+            updated_at = datetime('now')`,
+    args: [bookId, user.id, rating, content || null, isPublic, isAnonymous],
   });
 
   revalidatePath("/library");
