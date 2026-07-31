@@ -198,6 +198,28 @@ export default function RecommendClient({
         </p>
       </div>
 
+      {isLoggedIn ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-xl font-bold">취향 맞춤 추천</h2>
+          {hasFavoriteGenres ? (
+            <BookGrid
+              books={personalized}
+              isLoggedIn={isLoggedIn}
+              onReview={setReviewTarget}
+            />
+          ) : (
+            <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
+              책에 4점 이상의 감상을 남기면, 좋아하는 장르를 바탕으로 맞춤
+              추천을 보여드려요.
+            </p>
+          )}
+        </section>
+      ) : (
+        <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
+          로그인하면 내 취향에 맞는 책을 추천받을 수 있어요.
+        </p>
+      )}
+
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">지금 많이 찾는 책</h2>
@@ -253,28 +275,6 @@ export default function RecommendClient({
           />
         )}
       </section>
-
-      {isLoggedIn ? (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-xl font-bold">취향 맞춤 추천</h2>
-          {hasFavoriteGenres ? (
-            <BookGrid
-              books={personalized}
-              isLoggedIn={isLoggedIn}
-              onReview={setReviewTarget}
-            />
-          ) : (
-            <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-              책에 4점 이상의 감상을 남기면, 좋아하는 장르를 바탕으로 맞춤
-              추천을 보여드려요.
-            </p>
-          )}
-        </section>
-      ) : (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-          로그인하면 내 취향에 맞는 책을 추천받을 수 있어요.
-        </p>
-      )}
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-bold">많이 본 감상평</h2>
