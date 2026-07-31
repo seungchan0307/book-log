@@ -58,16 +58,16 @@ export default async function Home() {
         ) : (
           <>
             <Link
-              href="/signup"
+              href="/explore"
               className="rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground hover:opacity-90"
             >
-              시작하기
+              책갈피 시작하기
             </Link>
             <Link
-              href="/recommend"
+              href="/login"
               className="rounded-md border border-border px-5 py-2.5 font-medium hover:bg-card"
             >
-              추천 도서 보러가기
+              로그인 / 회원가입 하기
             </Link>
           </>
         )}

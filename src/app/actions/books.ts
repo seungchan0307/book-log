@@ -14,6 +14,79 @@ export type AladinSearchState =
   | { results: AladinBookResult[] }
   | { error: string };
 
+type ReadingStatus = "finished" | "reading" | "want_to_read";
+
+function parseReadingStatus(raw: string): ReadingStatus {
+  return raw === "reading" || raw === "want_to_read" ? raw : "finished";
+}
+
+// 다 읽은 책은 평점이 필수. 읽는 중/읽을 예정은 아직 감상을 남길 단계가
+// 아니라서 평점이 선택이지만, 그래도 남기기로 했다면 형식은 유효해야 함.
+function validateReadingSubmission(
+  readingStatus: ReadingStatus,
+  rating: number,
+  content: string
+): string | null {
+  if (readingStatus === "finished") {
+    if (
+      !Number.isFinite(rating) ||
+      rating < 0.5 ||
+      rating > 5 ||
+      !Number.isInteger(rating * 2)
+    ) {
+      return "평점을 선택해주세요.";
+    }
+  } else if (
+    rating !== 0 &&
+    (rating < 0.5 || rating > 5 || !Number.isInteger(rating * 2))
+  ) {
+    return "평점은 0.5~5점 사이에서 0.5점 단위로 선택해주세요.";
+  }
+  if (content.length > 4000) {
+    return "감상평은 4000자 이내로 작성해주세요.";
+  }
+  return null;
+}
+
+async function upsertReadingStatusAndReview(
+  db: Awaited<ReturnType<typeof getDb>>,
+  userId: number,
+  bookId: number,
+  readingStatus: ReadingStatus,
+  rating: number,
+  content: string,
+  isPublic: number,
+  isAnonymous: number
+) {
+  // want_to_read never carries a review even if a stray rating slipped
+  // through; reading only inserts one if the user opted in.
+  if (rating > 0 && readingStatus !== "want_to_read") {
+    await db.execute({
+      sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public, is_anonymous)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(book_id, user_id)
+            DO UPDATE SET rating = excluded.rating, content = excluded.content,
+              is_public = excluded.is_public, is_anonymous = excluded.is_anonymous,
+              updated_at = datetime('now')`,
+      args: [bookId, userId, rating, content || null, isPublic, isAnonymous],
+    });
+  }
+
+  await db.execute({
+    sql: `INSERT INTO reading_status (user_id, book_id, status) VALUES (?, ?, ?)
+          ON CONFLICT(user_id, book_id)
+          DO UPDATE SET status = excluded.status, updated_at = datetime('now')`,
+    args: [userId, bookId, readingStatus],
+  });
+
+  // Registering (or re-registering) a book is an explicit "put this back on
+  // my shelf" — undo any earlier 서재에서 삭제 for it.
+  await db.execute({
+    sql: "DELETE FROM library_hidden WHERE user_id = ? AND book_id = ?",
+    args: [userId, bookId],
+  });
+}
+
 export async function searchAladinBooks(
   query: string
 ): Promise<AladinSearchState> {
@@ -133,10 +206,7 @@ export async function addBookWithReview(
   const isPublic = formData.get("is_public") ? 1 : 0;
   const isAnonymous = formData.get("is_anonymous") ? 1 : 0;
   const readingStatusRaw = String(formData.get("reading_status") ?? "").trim();
-  const readingStatus: "finished" | "reading" | "want_to_read" =
-    readingStatusRaw === "reading" || readingStatusRaw === "want_to_read"
-      ? readingStatusRaw
-      : "finished";
+  const readingStatus = parseReadingStatus(readingStatusRaw);
 
   if (title.length < 1 || title.length > 200) {
     return { error: "제목을 1~200자로 입력해주세요." };
@@ -157,25 +227,9 @@ export async function addBookWithReview(
     return { error: "구매 링크는 http(s)로 시작해야 합니다." };
   }
   const rating = ratingRaw ? Number(ratingRaw) : 0;
-  // 다 읽은 책은 평점이 필수. 읽는 중/읽을 예정은 아직 감상을 남길 단계가
-  // 아니라서 평점이 선택이지만, 그래도 남기기로 했다면 형식은 유효해야 함.
-  if (readingStatus === "finished") {
-    if (
-      !Number.isFinite(rating) ||
-      rating < 0.5 ||
-      rating > 5 ||
-      !Number.isInteger(rating * 2)
-    ) {
-      return { error: "평점을 선택해주세요." };
-    }
-  } else if (
-    rating !== 0 &&
-    (rating < 0.5 || rating > 5 || !Number.isInteger(rating * 2))
-  ) {
-    return { error: "평점은 0.5~5점 사이에서 0.5점 단위로 선택해주세요." };
-  }
-  if (content.length > 4000) {
-    return { error: "감상평은 4000자 이내로 작성해주세요." };
+  const validationError = validateReadingSubmission(readingStatus, rating, content);
+  if (validationError) {
+    return { error: validationError };
   }
 
   const db = await getDb();
@@ -215,33 +269,73 @@ export async function addBookWithReview(
     bookId = Number(inserted.lastInsertRowid);
   }
 
-  // want_to_read never carries a review even if a stray rating slipped
-  // through; reading only inserts one if the user opted in.
-  if (rating > 0 && readingStatus !== "want_to_read") {
-    await db.execute({
-      sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public, is_anonymous)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON CONFLICT(book_id, user_id)
-            DO UPDATE SET rating = excluded.rating, content = excluded.content,
-              is_public = excluded.is_public, is_anonymous = excluded.is_anonymous,
-              updated_at = datetime('now')`,
-      args: [bookId, user.id, rating, content || null, isPublic, isAnonymous],
-    });
+  await upsertReadingStatusAndReview(
+    db,
+    user.id,
+    bookId,
+    readingStatus,
+    rating,
+    content,
+    isPublic,
+    isAnonymous
+  );
+
+  revalidatePath("/library");
+  revalidatePath("/recommend");
+  revalidatePath(`/books/${bookId}`);
+  return { success: true };
+}
+
+// Adds a book that's already catalogued (found via its /books/[id] page)
+// straight to the current user's library — skips the search/title/author/
+// genre fields addBookWithReview needs, since all of that is already known.
+export async function addExistingBookToLibrary(
+  _prevState: BookFormState,
+  formData: FormData
+): Promise<BookFormState> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
   }
 
-  await db.execute({
-    sql: `INSERT INTO reading_status (user_id, book_id, status) VALUES (?, ?, ?)
-          ON CONFLICT(user_id, book_id)
-          DO UPDATE SET status = excluded.status, updated_at = datetime('now')`,
-    args: [user.id, bookId, readingStatus],
-  });
+  const bookId = Number(formData.get("book_id"));
+  if (!Number.isInteger(bookId) || bookId <= 0) {
+    return { error: "잘못된 요청입니다." };
+  }
 
-  // Registering (or re-registering) a book is an explicit "put this back on
-  // my shelf" — undo any earlier 서재에서 삭제 for it.
-  await db.execute({
-    sql: "DELETE FROM library_hidden WHERE user_id = ? AND book_id = ?",
-    args: [user.id, bookId],
+  const ratingRaw = String(formData.get("rating") ?? "").trim();
+  const content = String(formData.get("content") ?? "").trim();
+  const isPublic = formData.get("is_public") ? 1 : 0;
+  const isAnonymous = formData.get("is_anonymous") ? 1 : 0;
+  const readingStatus = parseReadingStatus(
+    String(formData.get("reading_status") ?? "").trim()
+  );
+  const rating = ratingRaw ? Number(ratingRaw) : 0;
+
+  const validationError = validateReadingSubmission(readingStatus, rating, content);
+  if (validationError) {
+    return { error: validationError };
+  }
+
+  const db = await getDb();
+  const existing = await db.execute({
+    sql: "SELECT id FROM books WHERE id = ?",
+    args: [bookId],
   });
+  if (existing.rows.length === 0) {
+    return { error: "존재하지 않는 책입니다." };
+  }
+
+  await upsertReadingStatusAndReview(
+    db,
+    user.id,
+    bookId,
+    readingStatus,
+    rating,
+    content,
+    isPublic,
+    isAnonymous
+  );
 
   revalidatePath("/library");
   revalidatePath("/recommend");

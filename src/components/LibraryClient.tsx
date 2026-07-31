@@ -13,11 +13,9 @@ import type { BookWithStats, ReviewWithBook } from "@/lib/types";
 export default function LibraryClient({
   books,
   myReviews,
-  isLoggedIn,
 }: {
   books: BookWithStats[];
   myReviews: ReviewWithBook[];
-  isLoggedIn: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
@@ -57,21 +55,15 @@ export default function LibraryClient({
         ) : (
           <h1 className="text-2xl font-bold">나의 서재</h1>
         )}
-        {isLoggedIn ? (
-          addOpen ? (
-            <AddBookForm onOpenChange={setAddOpen} />
-          ) : (
-            <button
-              onClick={() => setAddOpen(true)}
-              className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
-            >
-              + 책 등록하기
-            </button>
-          )
+        {addOpen ? (
+          <AddBookForm onOpenChange={setAddOpen} />
         ) : (
-          <p className="text-sm text-muted">
-            로그인하면 책을 등록하고 감상을 남길 수 있어요.
-          </p>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
+          >
+            + 책 등록하기
+          </button>
         )}
       </div>
 
@@ -106,9 +98,9 @@ export default function LibraryClient({
                 <BookCard
                   key={book.id}
                   book={book}
-                  isLoggedIn={isLoggedIn}
+                  isLoggedIn
                   onReview={setReviewTarget}
-                  canRemove={isLoggedIn}
+                  canRemove
                 />
               ))}
             </div>
@@ -116,7 +108,7 @@ export default function LibraryClient({
         </>
       )}
 
-      {!addOpen && isLoggedIn && (
+      {!addOpen && (
         <div className="flex flex-col gap-3">
           <h2 className="text-xl font-bold">내가 남긴 감상</h2>
           {myReviews.length === 0 ? (
