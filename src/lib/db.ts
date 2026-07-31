@@ -29,6 +29,7 @@ async function initSchema(client: Client) {
         username TEXT UNIQUE NOT NULL,
         nickname TEXT NOT NULL,
         password_hash TEXT NOT NULL,
+        birthdate TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
       `CREATE TABLE IF NOT EXISTS sessions (
@@ -113,6 +114,14 @@ async function initSchema(client: Client) {
     await client.execute("ALTER TABLE users RENAME COLUMN email TO username");
   } catch {
     // column already renamed (or table was created fresh with username)
+  }
+
+  // Migration guard: birthdate was added after the users table already
+  // existed in production, so CREATE TABLE IF NOT EXISTS above won't add it.
+  try {
+    await client.execute("ALTER TABLE users ADD COLUMN birthdate TEXT");
+  } catch {
+    // column already exists
   }
 
   // Migration guard: reviews.rating started as INTEGER (whole stars only).

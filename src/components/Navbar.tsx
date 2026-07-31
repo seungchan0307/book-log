@@ -26,7 +26,9 @@ export default async function Navbar() {
           </Link>
           {user ? (
             <>
-              <span className="text-muted">{user.nickname}님</span>
+              <Link href="/profile" className="text-muted hover:text-accent">
+                {user.nickname}님
+              </Link>
               <form action={logOut}>
                 <button
                   type="submit"

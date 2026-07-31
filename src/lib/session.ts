@@ -46,7 +46,7 @@ export async function getCurrentUser(): Promise<User | null> {
 
   const db = await getDb();
   const result = await db.execute({
-    sql: `SELECT u.id, u.username, u.nickname, s.expires_at
+    sql: `SELECT u.id, u.username, u.nickname, u.birthdate, s.expires_at
           FROM sessions s
           JOIN users u ON u.id = s.user_id
           WHERE s.token = ?`,
@@ -54,7 +54,13 @@ export async function getCurrentUser(): Promise<User | null> {
   });
 
   const row = result.rows[0] as unknown as
-    | { id: number; username: string; nickname: string; expires_at: string }
+    | {
+        id: number;
+        username: string;
+        nickname: string;
+        birthdate: string | null;
+        expires_at: string;
+      }
     | undefined;
 
   if (!row) return null;
@@ -67,7 +73,12 @@ export async function getCurrentUser(): Promise<User | null> {
     return null;
   }
 
-  return { id: row.id, username: row.username, nickname: row.nickname };
+  return {
+    id: row.id,
+    username: row.username,
+    nickname: row.nickname,
+    birthdate: row.birthdate,
+  };
 }
 
 export async function requireUser(): Promise<User> {
