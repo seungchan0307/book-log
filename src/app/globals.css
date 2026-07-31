@@ -20,6 +20,17 @@
   --color-accent-foreground: var(--accent-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Headings were sized the same on phone and desktop, which on a narrow
+     screen reads oversized and squeezes tap targets together. Fluid sizing
+     via clamp() shrinks them on small viewports and keeps the original
+     desktop size, so no per-component sm:/md: overrides are needed. */
+  --text-lg: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  --text-xl: clamp(1.05rem, 0.95rem + 0.5vw, 1.25rem);
+  --text-2xl: clamp(1.15rem, 1rem + 0.75vw, 1.5rem);
+  --text-3xl: clamp(1.3rem, 1.05rem + 1.25vw, 1.875rem);
+  --text-4xl: clamp(1.5rem, 1.1rem + 2vw, 2.25rem);
+  --text-5xl: clamp(1.75rem, 1.2rem + 2.75vw, 3rem);
 }
 
 @media (prefers-color-scheme: dark) {
