@@ -78,3 +78,18 @@ export async function deleteReview(formData: FormData) {
   revalidatePath("/recommend");
   revalidatePath(`/books/${review.book_id}`);
 }
+
+export async function deleteReviewForBook(bookId: number) {
+  const user = await getCurrentUser();
+  if (!user) return;
+
+  const db = await getDb();
+  await db.execute({
+    sql: "DELETE FROM reviews WHERE book_id = ? AND user_id = ?",
+    args: [bookId, user.id],
+  });
+
+  revalidatePath("/library");
+  revalidatePath("/recommend");
+  revalidatePath(`/books/${bookId}`);
+}

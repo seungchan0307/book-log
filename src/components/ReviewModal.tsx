@@ -1,7 +1,12 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
-import { upsertReview, type ReviewFormState } from "@/app/actions/reviews";
+import { useActionState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  deleteReviewForBook,
+  upsertReview,
+  type ReviewFormState,
+} from "@/app/actions/reviews";
 import { StarPicker } from "@/components/StarRating";
 import type { BookWithStats } from "@/lib/types";
 
@@ -14,7 +19,9 @@ export default function ReviewModal({
   book: BookWithStats;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(upsertReview, initialState);
+  const [isDeleting, startDelete] = useTransition();
 
   // Notifying the parent to close is a side effect on another component, so
   // it must run in an effect rather than during ReviewModal's own render.
@@ -23,6 +30,15 @@ export default function ReviewModal({
       onClose();
     }
   }, [state, onClose]);
+
+  function handleDelete() {
+    if (!window.confirm("감상을 지우시겠습니까?")) return;
+    startDelete(async () => {
+      await deleteReviewForBook(book.id);
+      router.refresh();
+      onClose();
+    });
+  }
 
   return (
     <div
@@ -79,13 +95,25 @@ export default function ReviewModal({
           {state.error && (
             <p className="text-sm text-red-600">{state.error}</p>
           )}
-          <button
-            type="submit"
-            disabled={pending}
-            className="rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {pending ? "저장 중..." : "저장"}
-          </button>
+          <div className="flex gap-2">
+            {book.my_rating != null && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting || pending}
+                className="rounded-md border border-border px-4 py-2 font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                {isDeleting ? "삭제 중..." : "삭제"}
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={pending || isDeleting}
+              className="rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
+            >
+              {pending ? "저장 중..." : "저장"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

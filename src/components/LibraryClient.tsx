@@ -135,7 +135,15 @@ export default function LibraryClient({
                         {r.content}
                       </p>
                     )}
-                    <form action={deleteReview} className="self-start">
+                    <form
+                      action={deleteReview}
+                      className="self-start"
+                      onSubmit={(e) => {
+                        if (!window.confirm("감상을 지우시겠습니까?")) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
                       <input type="hidden" name="review_id" value={r.id} />
                       <button
                         type="submit"
