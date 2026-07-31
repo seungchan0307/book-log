@@ -188,11 +188,20 @@ export async function getPersonalizedRecommendations(
   return rowsToObjects<BookWithStats>(result);
 }
 
-export async function listAllBookOptions(): Promise<BookOption[]> {
+// Only books the user has actually reviewed — the reading calendar's
+// check-in dropdown should offer their own library, not every shared book.
+export async function listMyBookOptions(
+  userId: number
+): Promise<BookOption[]> {
   const db = await getDb();
-  const result = await db.execute(
-    "SELECT id, title, author FROM books ORDER BY title ASC"
-  );
+  const result = await db.execute({
+    sql: `SELECT DISTINCT b.id, b.title, b.author
+          FROM books b
+          JOIN reviews r ON r.book_id = b.id
+          WHERE r.user_id = ?
+          ORDER BY b.title ASC`,
+    args: [userId],
+  });
   return rowsToObjects<BookOption>(result);
 }
 

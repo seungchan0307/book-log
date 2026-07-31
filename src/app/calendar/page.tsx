@@ -5,7 +5,7 @@ import {
   getMonthReadingDays,
   getTodayReadingLog,
   getTotalReadDays,
-  listAllBookOptions,
+  listMyBookOptions,
 } from "@/lib/data";
 import { todayDateString } from "@/lib/date";
 import ReadingCheckinForm from "@/components/ReadingCheckinForm";
@@ -38,7 +38,7 @@ export default async function CalendarPage() {
   const streak = await getCurrentStreak(user.id);
   const totalDaysRead = await getTotalReadDays(user.id);
   const monthDays = await getMonthReadingDays(user.id, year, month);
-  const books = todayLog ? [] : await listAllBookOptions();
+  const books = todayLog ? [] : await listMyBookOptions(user.id);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 py-16 text-center">

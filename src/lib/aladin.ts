@@ -24,6 +24,30 @@ type AladinApiItem = {
 
 const ALADIN_ITEM_SEARCH_URL = "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx";
 
+// Aladin's author field bundles every contributor and role together, e.g.
+// "베르나르 베르베르 (지은이), 이세욱 (옮긴이)". We only want the writer(s),
+// with the "(지은이)" label itself stripped off.
+function extractAuthor(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const segments = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const writers = segments
+    .filter((s) => s.includes("지은이"))
+    .map((s) => s.replace(/\(.*?\)/g, "").trim())
+    .filter(Boolean);
+  if (writers.length > 0) return writers.join(", ");
+
+  // No role labels at all — strip any other parenthetical (e.g. "(옮긴이)")
+  // and fall back to whatever's left.
+  const fallback = segments
+    .map((s) => s.replace(/\(.*?\)/g, "").trim())
+    .filter(Boolean);
+  return fallback.length > 0 ? fallback.join(", ") : null;
+}
+
 export async function searchAladin(query: string): Promise<AladinBookResult[]> {
   const ttbKey = process.env.ALADIN_TTB_KEY;
   if (!ttbKey) {
@@ -57,7 +81,7 @@ export async function searchAladin(query: string): Promise<AladinBookResult[]> {
   return items.map((item) => ({
     isbn: item.isbn13 || item.isbn || "",
     title: item.title ?? "",
-    author: item.author ?? null,
+    author: extractAuthor(item.author),
     publisher: item.publisher ?? null,
     cover: item.cover ?? null,
     description: item.description ?? null,

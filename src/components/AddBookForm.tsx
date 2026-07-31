@@ -17,7 +17,6 @@ const emptyFields = {
   author: "",
   genre: "",
   coverUrl: "",
-  description: "",
   purchaseUrl: "",
   isbn: "",
 };
@@ -70,7 +69,6 @@ export default function AddBookForm() {
       author: book.author ?? "",
       genre: book.genre ?? "",
       coverUrl: book.cover ?? "",
-      description: book.description ?? "",
       purchaseUrl: book.link ?? "",
       isbn: book.isbn || "",
     });
@@ -218,21 +216,6 @@ export default function AddBookForm() {
             ))}
           </select>
         </div>
-        <div className="flex flex-col gap-1 sm:col-span-2">
-          <label htmlFor="description" className="text-sm font-medium">
-            책 소개
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            rows={2}
-            value={fields.description}
-            onChange={(e) =>
-              setFields({ ...fields, description: e.target.value })
-            }
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-          />
-        </div>
       </div>
 
       <div className="flex flex-col gap-3 border-t border-border pt-3">
@@ -247,7 +230,7 @@ export default function AddBookForm() {
           <textarea
             id="content"
             name="content"
-            rows={4}
+            rows={10}
             placeholder="감상평 없이 평점만 남겨도 돼요"
             className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
           />

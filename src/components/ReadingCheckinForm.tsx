@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { submitReadingCheckin } from "@/app/actions/reading";
 import ReadingStatusCard from "@/components/ReadingStatusCard";
@@ -86,6 +87,24 @@ export default function ReadingCheckinForm({
               읽지 않음
             </button>
           </div>
+        </>
+      ) : books.length === 0 ? (
+        <>
+          <p className="text-muted">
+            기록할 책이 없어요. 서재에서 책을 먼저 찾아볼까요?
+          </p>
+          <Link
+            href="/library"
+            className="rounded-md bg-accent px-5 py-2 font-medium text-accent-foreground hover:opacity-90"
+          >
+            책 찾으러 가기
+          </Link>
+          <button
+            onClick={() => setStep("ask")}
+            className="text-sm text-muted hover:text-foreground"
+          >
+            뒤로
+          </button>
         </>
       ) : (
         <>
