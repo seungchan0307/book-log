@@ -5,6 +5,7 @@ import {
   getBookWithStats,
   getPublicReviewsForBook,
   incrementBookViewCount,
+  isBookInMyLibrary,
 } from "@/lib/data";
 import { StarDisplay } from "@/components/StarRating";
 import BookDetailActions from "@/components/BookDetailActions";
@@ -25,6 +26,7 @@ export default async function BookDetailPage({
 
   await incrementBookViewCount(bookId);
   const publicReviews = await getPublicReviewsForBook(bookId, user?.id ?? null);
+  const inLibrary = user ? await isBookInMyLibrary(bookId, user.id) : false;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
@@ -72,7 +74,11 @@ export default async function BookDetailPage({
             </p>
           )}
           <div className="mt-2 flex flex-wrap gap-2">
-            <BookDetailActions book={book} isLoggedIn={Boolean(user)} />
+            <BookDetailActions
+              book={book}
+              isLoggedIn={Boolean(user)}
+              inLibrary={inLibrary}
+            />
             {book.purchase_url && (
               <a
                 href={book.purchase_url}

@@ -62,6 +62,30 @@ export async function listMyBooksWithStats(
   return rowsToObjects<BookWithStats>(result);
 }
 
+// Leaving a review from the book detail page requires the book to already
+// be on the user's own shelf (registered or reviewed by them, and not
+// 서재에서 삭제-hidden) — same membership rule as listMyBooksWithStats.
+export async function isBookInMyLibrary(
+  bookId: number,
+  userId: number
+): Promise<boolean> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT 1 FROM books b
+          WHERE b.id = ?
+            AND (
+              EXISTS(SELECT 1 FROM reviews r WHERE r.book_id = b.id AND r.user_id = ?)
+              OR b.created_by = ?
+            )
+            AND NOT EXISTS(
+              SELECT 1 FROM library_hidden lh
+              WHERE lh.book_id = b.id AND lh.user_id = ?
+            )`,
+    args: [bookId, userId, userId, userId],
+  });
+  return result.rows.length > 0;
+}
+
 export async function getBookWithStats(
   bookId: number,
   currentUserId: number | null
