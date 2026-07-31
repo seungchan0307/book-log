@@ -37,6 +37,12 @@ export default async function Navbar() {
             <Link href="/recommend" className="hover:text-accent">
               추천
             </Link>
+            <span className="text-border" aria-hidden="true">
+              /
+            </span>
+            <Link href="/community" className="hover:text-accent">
+              이야기
+            </Link>
           </div>
           {user ? (
             <>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { fetchTopRatedBooksByGenre } from "@/app/actions/books";
 import BookCard from "@/components/BookCard";
 import GenreSelect from "@/components/GenreSelect";
-import LikeButton from "@/components/LikeButton";
+import PopularReviewList from "@/components/PopularReviewList";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
 import type { BookWithStats, PopularReview } from "@/lib/types";
@@ -83,75 +83,6 @@ function BookPosterRow({
         </Link>
       ))}
     </div>
-  );
-}
-
-function PopularReviewList({
-  reviews,
-  isLoggedIn,
-}: {
-  reviews: PopularReview[];
-  isLoggedIn: boolean;
-}) {
-  if (reviews.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-        아직 보여줄 감상평이 없어요.
-      </p>
-    );
-  }
-  return (
-    <ul className="flex flex-col gap-3">
-      {reviews.map((r) => (
-        <li
-          key={r.id}
-          className="flex gap-3 rounded-lg border border-border bg-card p-4"
-        >
-          <Link
-            href={`/books/${r.book_id}`}
-            className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-xl text-muted"
-          >
-            {r.book_cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={r.book_cover_url}
-                alt={r.book_title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              "📖"
-            )}
-          </Link>
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="min-w-0">
-                <Link href={`/books/${r.book_id}`} className="hover:underline">
-                  <span className="font-medium">{r.book_title}</span>
-                </Link>
-                {r.book_author && (
-                  <span className="ml-2 text-sm text-muted">
-                    {r.book_author}
-                  </span>
-                )}
-              </div>
-              <StarDisplay rating={r.rating} />
-            </div>
-            {r.content && (
-              <p className="whitespace-pre-wrap text-sm">{r.content}</p>
-            )}
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted">{r.reviewer_nickname}</span>
-              <LikeButton
-                reviewId={r.id}
-                initialLiked={r.liked_by_me === 1}
-                initialCount={r.like_count}
-                isLoggedIn={isLoggedIn}
-              />
-            </div>
-          </div>
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -277,7 +208,15 @@ export default function RecommendClient({
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-bold">많이 본 감상평</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">많이 본 감상평</h2>
+          <Link
+            href="/community"
+            className="text-sm text-muted hover:text-accent"
+          >
+            더보기 &gt;
+          </Link>
+        </div>
         <PopularReviewList reviews={popularReviews} isLoggedIn={isLoggedIn} />
       </section>
 
