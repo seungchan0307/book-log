@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import {
   addBookWithReview,
   searchAladinBooks,
@@ -22,11 +22,7 @@ const emptyFields = {
   isbn: "",
 };
 
-export default function AddBookForm({
-  onCoverChange,
-}: {
-  onCoverChange?: (coverUrl: string | null) => void;
-}) {
+export default function AddBookForm() {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState(
     addBookWithReview,
@@ -54,12 +50,6 @@ export default function AddBookForm({
       setResetKey((k) => k + 1);
     }
   }
-
-  // Surfaces the picked book's cover to the parent (shown big next to the
-  // "서재" heading) whenever it changes, and clears it once the panel closes.
-  useEffect(() => {
-    onCoverChange?.(open ? fields.coverUrl || null : null);
-  }, [open, fields.coverUrl, onCoverChange]);
 
   function runSearch() {
     setSearchError(null);

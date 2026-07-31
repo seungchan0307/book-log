@@ -24,7 +24,6 @@ export default function LibraryClient({
   const [reviewTarget, setReviewTarget] = useState<BookWithStats | null>(
     null
   );
-  const [pickedCover, setPickedCover] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return books.filter((b) => {
@@ -43,25 +42,13 @@ export default function LibraryClient({
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
       <div className="flex flex-col gap-3">
         <h1 className="text-2xl font-bold">서재</h1>
-        <div className="flex flex-wrap items-stretch justify-between gap-3">
-          {pickedCover && (
-            <div className="flex min-h-64 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-md bg-card p-3 shadow-md">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={pickedCover}
-                alt="선택한 책 표지"
-                className="h-full w-full object-contain"
-              />
-            </div>
-          )}
-          {isLoggedIn ? (
-            <AddBookForm onCoverChange={setPickedCover} />
-          ) : (
-            <p className="text-sm text-muted">
-              로그인하면 책을 등록하고 감상을 남길 수 있어요.
-            </p>
-          )}
-        </div>
+        {isLoggedIn ? (
+          <AddBookForm />
+        ) : (
+          <p className="text-sm text-muted">
+            로그인하면 책을 등록하고 감상을 남길 수 있어요.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2">
