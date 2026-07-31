@@ -54,11 +54,17 @@ export default async function BookDetailPage({
             )}
           </div>
           {book.author && <p className="text-muted">{book.author}</p>}
-          <StarDisplay
-            rating={book.avg_rating}
-            reviewCount={book.review_count}
-            size="text-lg"
-          />
+          {book.avg_rating !== null ? (
+            <StarDisplay
+              rating={book.avg_rating}
+              reviewCount={book.review_count}
+              size="text-lg"
+            />
+          ) : (
+            <p className="text-sm text-muted">
+              아직 평점이 없어요. 첫 번째로 별점을 남겨보세요.
+            </p>
+          )}
           {book.description && (
             <p className="mt-2 whitespace-pre-wrap text-sm text-muted">
               {book.description}
@@ -105,7 +111,8 @@ export default async function BookDetailPage({
         </h2>
         {publicReviews.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-            아직 공개된 감상평이 없어요.
+            아직 공개된 감상평이 없어요. 이 책을 읽었다면 감상을 가장 먼저
+            남겨보세요.
           </p>
         ) : (
           <ul className="flex flex-col gap-3">

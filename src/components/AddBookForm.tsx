@@ -42,6 +42,7 @@ export default function AddBookForm({
   // Bumping this key remounts the form (and StarPicker inside it) so a
   // successful submit clears the rating/review, not just the text fields.
   const [resetKey, setResetKey] = useState(0);
+  const [clientError, setClientError] = useState<string | null>(null);
 
   // Clearing the form fields is this component's own state, adjusted during
   // its own render. Closing the panel is a side effect on the parent, so
@@ -103,6 +104,14 @@ export default function AddBookForm({
     <form
       key={resetKey}
       action={action}
+      onSubmit={(e) => {
+        if (!resolvedGenre) {
+          e.preventDefault();
+          setClientError("장르를 선택하거나 직접 입력해주세요.");
+        } else {
+          setClientError(null);
+        }
+      }}
       className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
     >
       <div className="flex items-center justify-between">
@@ -212,7 +221,7 @@ export default function AddBookForm({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="genre" className="text-sm font-medium">
-            장르
+            장르 *
           </label>
           <input type="hidden" name="genre" value={resolvedGenre} />
           <GenreSelect value={genreChoice} onChange={setGenreChoice} />
@@ -256,7 +265,9 @@ export default function AddBookForm({
         </label>
       </div>
 
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {(clientError || state.error) && (
+        <p className="text-sm text-red-600">{clientError || state.error}</p>
+      )}
       <button
         type="submit"
         disabled={pending}

@@ -1,14 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  findOrCreateBookByIsbn,
+  searchAladinForExplore,
+} from "@/app/actions/books";
 import GenreSelect from "@/components/GenreSelect";
 import { StarDisplay } from "@/components/StarRating";
+import type { AladinBookResult } from "@/lib/aladin";
 import type { BookWithStats } from "@/lib/types";
 
 export default function ExploreClient({ books }: { books: BookWithStats[] }) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
+
+  const [findQuery, setFindQuery] = useState("");
+  const [findResults, setFindResults] = useState<AladinBookResult[]>([]);
+  const [findError, setFindError] = useState<string | null>(null);
+  const [isFinding, startFind] = useTransition();
+  const [openingIsbn, setOpeningIsbn] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return books.filter((b) => {
@@ -23,6 +36,32 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
     });
   }, [books, search, genre]);
 
+  function runFind() {
+    setFindError(null);
+    startFind(async () => {
+      const result = await searchAladinForExplore(findQuery);
+      if ("error" in result) {
+        setFindError(result.error);
+        setFindResults([]);
+        return;
+      }
+      setFindResults(result.results);
+    });
+  }
+
+  function openResult(book: AladinBookResult) {
+    setOpeningIsbn(book.isbn);
+    startFind(async () => {
+      const result = await findOrCreateBookByIsbn(book);
+      setOpeningIsbn(null);
+      if ("error" in result) {
+        setFindError(result.error);
+        return;
+      }
+      router.push(`/books/${result.bookId}`);
+    });
+  }
+
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
       <div>
@@ -32,11 +71,76 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
         </p>
       </div>
 
+      <div className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3">
+        <span className="text-sm font-medium">탐색하고 싶은 책 찾아보기</span>
+        <div className="flex gap-2">
+          <input
+            value={findQuery}
+            onChange={(e) => setFindQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                runFind();
+              }
+            }}
+            placeholder="책 제목으로 검색"
+            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+          <button
+            type="button"
+            onClick={runFind}
+            disabled={isFinding || !findQuery.trim()}
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-background disabled:opacity-50"
+          >
+            {isFinding && !openingIsbn ? "검색 중..." : "검색"}
+          </button>
+        </div>
+        {findError && <p className="text-sm text-red-600">{findError}</p>}
+        {findResults.length > 0 && (
+          <ul className="flex max-h-72 flex-col gap-2 overflow-y-auto">
+            {findResults.map((b) => (
+              <li key={b.isbn || b.title}>
+                <button
+                  type="button"
+                  onClick={() => openResult(b)}
+                  disabled={isFinding}
+                  className="flex w-full gap-2 rounded-md border border-border p-2 text-left hover:bg-background disabled:opacity-50"
+                >
+                  <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-lg text-muted">
+                    {b.cover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={b.cover}
+                        alt={b.title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      "📖"
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{b.title}</p>
+                    <p className="truncate text-xs text-muted">
+                      {[b.author, b.publisher].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                  {openingIsbn === b.isbn && (
+                    <span className="ml-auto self-center text-xs text-muted">
+                      여는 중...
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="flex flex-wrap gap-2">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="제목 또는 저자로 검색"
+          placeholder="등록된 책을 제목 또는 저자로 검색"
           className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
         />
         <div className="w-48">

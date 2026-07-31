@@ -41,6 +41,64 @@ export async function searchAladinBooks(
   }
 }
 
+// Same Aladin lookup as searchAladinBooks, but for the explore page's
+// "찾아보기" search, which browsing doesn't require login for.
+export async function searchAladinForExplore(
+  query: string
+): Promise<AladinSearchState> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return { error: "검색어를 입력해주세요." };
+  }
+
+  const cached = await getCachedSearchResults(trimmed);
+  if (cached.length > 0) {
+    return { results: cached };
+  }
+
+  try {
+    const results = await searchAladin(trimmed);
+    await cacheSearchResults(results);
+    return { results };
+  } catch (e) {
+    return {
+      error: e instanceof Error ? e.message : "검색 중 오류가 발생했어요.",
+    };
+  }
+}
+
+// Explore search results may point at a book nobody has catalogued yet.
+// Clicking one should still land on a real /books/[id] page, so look it up
+// by ISBN and create a bare (unreviewed, genre-less) stub if it's new.
+export async function findOrCreateBookByIsbn(result: {
+  isbn: string;
+  title: string;
+  author: string | null;
+  cover: string | null;
+  link: string | null;
+}): Promise<{ bookId: number } | { error: string }> {
+  if (!result.isbn || !result.title) {
+    return { error: "잘못된 요청입니다." };
+  }
+
+  const db = await getDb();
+  const existing = await db.execute({
+    sql: "SELECT id FROM books WHERE isbn = ?",
+    args: [result.isbn],
+  });
+  const existingRow = existing.rows[0] as unknown as { id: number } | undefined;
+  if (existingRow) {
+    return { bookId: existingRow.id };
+  }
+
+  const inserted = await db.execute({
+    sql: `INSERT INTO books (title, author, cover_url, purchase_url, isbn)
+          VALUES (?, ?, ?, ?, ?)`,
+    args: [result.title, result.author, result.cover, result.link, result.isbn],
+  });
+  return { bookId: Number(inserted.lastInsertRowid) };
+}
+
 export async function addBookWithReview(
   _prevState: BookFormState,
   formData: FormData
@@ -63,6 +121,12 @@ export async function addBookWithReview(
 
   if (title.length < 1 || title.length > 200) {
     return { error: "제목을 1~200자로 입력해주세요." };
+  }
+  // Title/author can be auto-filled from search, but genre can't — Aladin's
+  // search doesn't reliably provide it, so require the user to actually
+  // pick or type one themselves.
+  if (!genre) {
+    return { error: "장르를 선택하거나 직접 입력해주세요." };
   }
   if (genre.length > 20) {
     return { error: "장르는 20자 이내로 입력해주세요." };
