@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { deleteBook } from "@/app/actions/books";
 import { StarDisplay } from "@/components/StarRating";
 import type { BookWithStats } from "@/lib/types";
 
@@ -8,11 +11,30 @@ export default function BookCard({
   book,
   isLoggedIn,
   onReview,
+  canDelete = false,
 }: {
   book: BookWithStats;
   isLoggedIn: boolean;
   onReview: (book: BookWithStats) => void;
+  canDelete?: boolean;
 }) {
+  const router = useRouter();
+  const [isDeleting, startDelete] = useTransition();
+
+  function handleDelete() {
+    if (
+      !window.confirm(
+        "이 책을 삭제하시겠습니까? 다른 사람이 남긴 감상도 함께 삭제됩니다."
+      )
+    ) {
+      return;
+    }
+    startDelete(async () => {
+      await deleteBook(book.id);
+      router.refresh();
+    });
+  }
+
   return (
     <div className="flex gap-3 rounded-lg border border-border bg-card p-4">
       <Link
@@ -48,12 +70,23 @@ export default function BookCard({
         </div>
         <StarDisplay rating={book.avg_rating} reviewCount={book.review_count} />
         {isLoggedIn ? (
-          <button
-            onClick={() => onReview(book)}
-            className="mt-1 self-start rounded-md border border-border px-3 py-1 text-sm hover:bg-background"
-          >
-            {book.my_rating ? "내 감상 수정" : "감상 남기기"}
-          </button>
+          <div className="mt-1 flex flex-wrap gap-2">
+            <button
+              onClick={() => onReview(book)}
+              className="self-start rounded-md border border-border px-3 py-1 text-sm hover:bg-background"
+            >
+              {book.my_rating ? "내 감상 수정" : "감상 남기기"}
+            </button>
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="self-start rounded-md border border-border px-3 py-1 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+              >
+                {isDeleting ? "삭제 중..." : "책 삭제"}
+              </button>
+            )}
+          </div>
         ) : (
           <span className="mt-1 self-start rounded-md border border-border px-3 py-1 text-sm text-muted">
             로그인하면 감상을 남길 수 있어요

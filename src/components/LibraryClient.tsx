@@ -14,10 +14,12 @@ export default function LibraryClient({
   books,
   myReviews,
   isLoggedIn,
+  currentUserId,
 }: {
   books: BookWithStats[];
   myReviews: ReviewWithBook[];
   isLoggedIn: boolean;
+  currentUserId: number | null;
 }) {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
@@ -82,6 +84,7 @@ export default function LibraryClient({
               book={book}
               isLoggedIn={isLoggedIn}
               onReview={setReviewTarget}
+              canDelete={isLoggedIn && book.created_by === currentUserId}
             />
           ))}
         </div>

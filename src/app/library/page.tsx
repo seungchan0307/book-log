@@ -12,6 +12,7 @@ export default async function LibraryPage() {
       books={books}
       myReviews={myReviews}
       isLoggedIn={Boolean(user)}
+      currentUserId={user?.id ?? null}
     />
   );
 }
