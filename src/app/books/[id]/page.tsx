@@ -8,6 +8,7 @@ import {
 } from "@/lib/data";
 import { StarDisplay } from "@/components/StarRating";
 import BookDetailActions from "@/components/BookDetailActions";
+import LikeButton from "@/components/LikeButton";
 
 export default async function BookDetailPage({
   params,
@@ -28,7 +29,7 @@ export default async function BookDetailPage({
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
       <Link href="/library" className="text-sm text-muted hover:text-accent">
-        ← 서재로 돌아가기
+        ← 나의 서재로 돌아가기
       </Link>
 
       <div className="flex gap-5">
@@ -128,9 +129,17 @@ export default async function BookDetailPage({
                 {r.content && (
                   <p className="whitespace-pre-wrap text-sm">{r.content}</p>
                 )}
-                <span className="text-xs text-muted">
-                  {r.updated_at.slice(0, 10)}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted">
+                    {r.updated_at.slice(0, 10)}
+                  </span>
+                  <LikeButton
+                    reviewId={r.id}
+                    initialLiked={r.liked_by_me === 1}
+                    initialCount={r.like_count}
+                    isLoggedIn={Boolean(user)}
+                  />
+                </div>
               </li>
             ))}
           </ul>

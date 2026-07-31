@@ -91,7 +91,7 @@ export default function ReadingCheckinForm({
       ) : books.length === 0 ? (
         <>
           <p className="text-muted">
-            기록할 책이 없어요. 서재에서 책을 먼저 찾아볼까요?
+            기록할 책이 없어요. 나의 서재에서 책을 먼저 찾아볼까요?
           </p>
           <Link
             href="/library"

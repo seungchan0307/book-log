@@ -95,3 +95,59 @@ export async function deleteReviewForBook(bookId: number) {
   revalidatePath("/recommend");
   revalidatePath(`/books/${bookId}`);
 }
+
+export type ToggleLikeResult =
+  | { liked: boolean; likeCount: number }
+  | { error: string };
+
+export async function toggleReviewLike(
+  reviewId: number
+): Promise<ToggleLikeResult> {
+  const user = await getCurrentUser();
+  if (!user) {
+    return { error: "로그인이 필요합니다." };
+  }
+  if (!Number.isInteger(reviewId) || reviewId <= 0) {
+    return { error: "잘못된 요청입니다." };
+  }
+
+  const db = await getDb();
+  const review = await db.execute({
+    sql: "SELECT book_id FROM reviews WHERE id = ?",
+    args: [reviewId],
+  });
+  const bookId = (review.rows[0] as unknown as { book_id: number } | undefined)
+    ?.book_id;
+  if (!bookId) {
+    return { error: "존재하지 않는 감상입니다." };
+  }
+
+  const existing = await db.execute({
+    sql: "SELECT 1 FROM review_likes WHERE user_id = ? AND review_id = ?",
+    args: [user.id, reviewId],
+  });
+  const liked = existing.rows.length === 0;
+
+  if (liked) {
+    await db.execute({
+      sql: "INSERT INTO review_likes (user_id, review_id) VALUES (?, ?)",
+      args: [user.id, reviewId],
+    });
+  } else {
+    await db.execute({
+      sql: "DELETE FROM review_likes WHERE user_id = ? AND review_id = ?",
+      args: [user.id, reviewId],
+    });
+  }
+
+  const countResult = await db.execute({
+    sql: "SELECT COUNT(*) AS count FROM review_likes WHERE review_id = ?",
+    args: [reviewId],
+  });
+  const likeCount = (countResult.rows[0] as unknown as { count: number })
+    .count;
+
+  revalidatePath("/recommend");
+  revalidatePath(`/books/${bookId}`);
+  return { liked, likeCount };
+}

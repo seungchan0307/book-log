@@ -82,13 +82,19 @@ export async function getPublicReviewsForBook(
   const result = await db.execute({
     sql: `SELECT rv.*,
                  CASE WHEN rv.is_anonymous = 1 THEN '익명' ELSE u.nickname END
-                   AS reviewer_nickname
+                   AS reviewer_nickname,
+                 (SELECT COUNT(*) FROM review_likes rl WHERE rl.review_id = rv.id)
+                   AS like_count,
+                 EXISTS(
+                   SELECT 1 FROM review_likes rl2
+                   WHERE rl2.review_id = rv.id AND rl2.user_id = ?
+                 ) AS liked_by_me
           FROM reviews rv
           JOIN users u ON u.id = rv.user_id
           WHERE rv.book_id = ? AND rv.is_public = 1 AND rv.user_id != ?
             AND rv.content IS NOT NULL
           ORDER BY rv.updated_at DESC`,
-    args: [bookId, excludeUserId ?? -1],
+    args: [excludeUserId ?? -1, bookId, excludeUserId ?? -1],
   });
   return rowsToObjects<PublicReview>(result);
 }
@@ -183,21 +189,30 @@ export async function incrementBookViewCount(bookId: number): Promise<void> {
   });
 }
 
-export async function getPopularReviews(limit = 20): Promise<PopularReview[]> {
+export async function getPopularReviews(
+  currentUserId: number | null,
+  limit = 20
+): Promise<PopularReview[]> {
   const db = await getDb();
   const result = await db.execute({
     sql: `SELECT rv.*,
                  CASE WHEN rv.is_anonymous = 1 THEN '익명' ELSE u.nickname END
                    AS reviewer_nickname,
                  b.title AS book_title, b.author AS book_author,
-                 b.cover_url AS book_cover_url, b.view_count AS book_view_count
+                 b.cover_url AS book_cover_url, b.view_count AS book_view_count,
+                 (SELECT COUNT(*) FROM review_likes rl WHERE rl.review_id = rv.id)
+                   AS like_count,
+                 EXISTS(
+                   SELECT 1 FROM review_likes rl2
+                   WHERE rl2.review_id = rv.id AND rl2.user_id = ?
+                 ) AS liked_by_me
           FROM reviews rv
           JOIN users u ON u.id = rv.user_id
           JOIN books b ON b.id = rv.book_id
           WHERE rv.is_public = 1 AND rv.content IS NOT NULL
           ORDER BY b.view_count DESC, rv.updated_at DESC
           LIMIT ?`,
-    args: [limit],
+    args: [currentUserId ?? -1, limit],
   });
   return rowsToObjects<PopularReview>(result);
 }

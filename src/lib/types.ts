@@ -47,6 +47,8 @@ export type ReviewWithBook = Review & {
 
 export type PublicReview = Review & {
   reviewer_nickname: string;
+  like_count: number;
+  liked_by_me: number;
 };
 
 export type PopularReview = Review & {
@@ -55,6 +57,8 @@ export type PopularReview = Review & {
   book_author: string | null;
   book_cover_url: string | null;
   book_view_count: number;
+  like_count: number;
+  liked_by_me: number;
 };
 
 export type ReadingLogStatus = "read" | "skipped";

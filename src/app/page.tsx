@@ -52,7 +52,7 @@ export default async function Home() {
               href="/library"
               className="rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground hover:opacity-90"
             >
-              내 서재로 가기
+              나의 서재로 가기
             </Link>
             <Link
               href="/recommend"

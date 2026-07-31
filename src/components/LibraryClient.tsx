@@ -49,13 +49,13 @@ export default function LibraryClient({
               onClick={() => setAddOpen(false)}
               className="hover:text-accent hover:underline"
             >
-              서재
+              나의 서재
             </button>
             {" / "}
             <span className="text-foreground">책 등록하기</span>
           </nav>
         ) : (
-          <h1 className="text-2xl font-bold">서재</h1>
+          <h1 className="text-2xl font-bold">나의 서재</h1>
         )}
         {isLoggedIn ? (
           addOpen ? (

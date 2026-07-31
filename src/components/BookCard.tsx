@@ -22,7 +22,7 @@ export default function BookCard({
   const [isRemoving, startRemove] = useTransition();
 
   function handleRemove() {
-    if (!window.confirm("내 서재에서 삭제하시겠습니까?")) return;
+    if (!window.confirm("나의 서재에서 삭제하시겠습니까?")) return;
     const deleteReviewToo = window.confirm(
       "남긴 감상도 함께 삭제할까요? (취소하면 감상은 그대로 남아요)"
     );

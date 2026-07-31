@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import BookCard from "@/components/BookCard";
+import LikeButton from "@/components/LikeButton";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
 import type { BookWithStats, PopularReview } from "@/lib/types";
@@ -83,7 +84,13 @@ function BookPosterRow({
   );
 }
 
-function PopularReviewList({ reviews }: { reviews: PopularReview[] }) {
+function PopularReviewList({
+  reviews,
+  isLoggedIn,
+}: {
+  reviews: PopularReview[];
+  isLoggedIn: boolean;
+}) {
   if (reviews.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
@@ -130,7 +137,15 @@ function PopularReviewList({ reviews }: { reviews: PopularReview[] }) {
             {r.content && (
               <p className="whitespace-pre-wrap text-sm">{r.content}</p>
             )}
-            <span className="text-xs text-muted">{r.reviewer_nickname}</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted">{r.reviewer_nickname}</span>
+              <LikeButton
+                reviewId={r.id}
+                initialLiked={r.liked_by_me === 1}
+                initialCount={r.like_count}
+                isLoggedIn={isLoggedIn}
+              />
+            </div>
           </div>
         </li>
       ))}
@@ -224,7 +239,7 @@ export default function RecommendClient({
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-bold">많이 본 감상평</h2>
-        <PopularReviewList reviews={popularReviews} />
+        <PopularReviewList reviews={popularReviews} isLoggedIn={isLoggedIn} />
       </section>
 
       {reviewTarget && (

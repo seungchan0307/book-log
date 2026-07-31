@@ -14,7 +14,7 @@ export default async function Navbar() {
         <nav className="flex items-center gap-4 text-base">
           <div className="flex items-center gap-4">
             <Link href="/library" className="hover:text-accent">
-              서재
+              나의 서재
             </Link>
             <span className="text-border" aria-hidden="true">
               /

@@ -137,7 +137,7 @@ export default function AddBookForm({
           onClick={() => onOpenChange(false)}
           className="text-sm text-muted hover:text-foreground"
         >
-          서재로 돌아가기
+          나의 서재로 돌아가기
         </button>
       </div>
 

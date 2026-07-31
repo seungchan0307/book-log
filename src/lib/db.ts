@@ -90,11 +90,18 @@ async function initSchema(client: Client) {
         book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
         PRIMARY KEY (user_id, book_id)
       )`,
+      `CREATE TABLE IF NOT EXISTS review_likes (
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        review_id INTEGER NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, review_id)
+      )`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_book_id ON reviews(book_id)`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_reading_logs_user_date ON reading_logs(user_id, log_date)`,
       `CREATE INDEX IF NOT EXISTS idx_aladin_cache_title ON aladin_search_cache(title)`,
+      `CREATE INDEX IF NOT EXISTS idx_review_likes_review_id ON review_likes(review_id)`,
     ],
     "write"
   );
