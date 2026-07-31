@@ -35,7 +35,6 @@ export default function AddBookForm({
   const [handledState, setHandledState] = useState(state);
 
   const [fields, setFields] = useState(emptyFields);
-  const [pickedBook, setPickedBook] = useState<AladinBookResult | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<AladinBookResult[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -50,7 +49,6 @@ export default function AddBookForm({
     if (state.success) {
       setOpen(false);
       setFields(emptyFields);
-      setPickedBook(null);
       setSearchResults([]);
       setSearchQuery("");
       setResetKey((k) => k + 1);
@@ -60,8 +58,8 @@ export default function AddBookForm({
   // Surfaces the picked book's cover to the parent (shown big next to the
   // "서재" heading) whenever it changes, and clears it once the panel closes.
   useEffect(() => {
-    onCoverChange?.(open && pickedBook ? fields.coverUrl || null : null);
-  }, [open, pickedBook, fields.coverUrl, onCoverChange]);
+    onCoverChange?.(open ? fields.coverUrl || null : null);
+  }, [open, fields.coverUrl, onCoverChange]);
 
   function runSearch() {
     setSearchError(null);
@@ -86,13 +84,7 @@ export default function AddBookForm({
       purchaseUrl: book.link ?? "",
       isbn: book.isbn || "",
     });
-    setPickedBook(book);
     setSearchResults([]);
-  }
-
-  function clearPick() {
-    setPickedBook(null);
-    setFields(emptyFields);
   }
 
   if (!open) {
@@ -123,173 +115,135 @@ export default function AddBookForm({
         </button>
       </div>
 
-      {!pickedBook && (
-        <div className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3">
-          <span className="text-sm font-medium">책 찾기</span>
-          <div className="flex gap-2">
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  runSearch();
-                }
-              }}
-              placeholder="책 제목으로 검색"
-              className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
-            />
-            <button
-              type="button"
-              onClick={runSearch}
-              disabled={isSearching || !searchQuery.trim()}
-              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-background disabled:opacity-50"
-            >
-              {isSearching ? "검색 중..." : "검색"}
-            </button>
-          </div>
-          {searchError && <p className="text-sm text-red-600">{searchError}</p>}
-          {searchResults.length > 0 && (
-            <ul className="flex max-h-56 flex-col gap-2 overflow-y-auto">
-              {searchResults.map((b) => (
-                <li key={b.isbn || b.title}>
-                  <button
-                    type="button"
-                    onClick={() => pickResult(b)}
-                    className="flex w-full gap-2 rounded-md border border-border p-2 text-left hover:bg-background"
-                  >
-                    <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-lg text-muted">
-                      {b.cover ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={b.cover}
-                          alt={b.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        "📖"
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{b.title}</p>
-                      <p className="truncate text-xs text-muted">
-                        {[b.author, b.publisher].filter(Boolean).join(" · ")}
-                      </p>
-                    </div>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <p className="text-xs text-muted">
-            찾는 책이 없다면 검색 없이 아래에 직접 입력할 수 있어요.
-          </p>
+      <div className="flex flex-col gap-2 rounded-md border border-dashed border-border p-3">
+        <span className="text-sm font-medium">책 찾기</span>
+        <div className="flex gap-2">
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                runSearch();
+              }
+            }}
+            placeholder="책 제목으로 검색"
+            className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+          <button
+            type="button"
+            onClick={runSearch}
+            disabled={isSearching || !searchQuery.trim()}
+            className="rounded-md border border-border px-3 py-2 text-sm hover:bg-background disabled:opacity-50"
+          >
+            {isSearching ? "검색 중..." : "검색"}
+          </button>
         </div>
-      )}
+        {searchError && <p className="text-sm text-red-600">{searchError}</p>}
+        {searchResults.length > 0 && (
+          <ul className="flex max-h-56 flex-col gap-2 overflow-y-auto">
+            {searchResults.map((b) => (
+              <li key={b.isbn || b.title}>
+                <button
+                  type="button"
+                  onClick={() => pickResult(b)}
+                  className="flex w-full gap-2 rounded-md border border-border p-2 text-left hover:bg-background"
+                >
+                  <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-lg text-muted">
+                    {b.cover ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={b.cover}
+                        alt={b.title}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      "📖"
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{b.title}</p>
+                    <p className="truncate text-xs text-muted">
+                      {[b.author, b.publisher].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-xs text-muted">
+          책을 선택하면 제목/저자가 자동으로 채워져요. 찾는 책이 없다면 검색
+          없이 아래에 직접 입력할 수 있어요.
+        </p>
+      </div>
 
       <input type="hidden" name="purchase_url" value={fields.purchaseUrl} />
       <input type="hidden" name="isbn" value={fields.isbn} />
       <input type="hidden" name="cover_url" value={fields.coverUrl} />
 
-      {pickedBook ? (
-        <div className="flex gap-3 rounded-md border border-border bg-background p-3">
-          <input type="hidden" name="title" value={fields.title} />
-          <input type="hidden" name="author" value={fields.author} />
-          <input type="hidden" name="genre" value={fields.genre} />
-          <input type="hidden" name="description" value={fields.description} />
-          <div className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-lg text-muted">
-            {fields.coverUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fields.coverUrl}
-                alt={fields.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              "📖"
-            )}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{fields.title}</p>
-            {fields.author && (
-              <p className="truncate text-sm text-muted">{fields.author}</p>
-            )}
-            {fields.genre && (
-              <p className="text-xs text-muted">{fields.genre}</p>
-            )}
-            <button
-              type="button"
-              onClick={clearPick}
-              className="mt-1 text-xs text-muted underline hover:text-foreground"
-            >
-              다른 책 찾기
-            </button>
-          </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1 sm:col-span-2">
+          <label htmlFor="title" className="text-sm font-medium">
+            제목 *
+          </label>
+          <input
+            id="title"
+            name="title"
+            required
+            maxLength={200}
+            value={fields.title}
+            onChange={(e) => setFields({ ...fields, title: e.target.value })}
+            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+          />
         </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1 sm:col-span-2">
-            <label htmlFor="title" className="text-sm font-medium">
-              제목 *
-            </label>
-            <input
-              id="title"
-              name="title"
-              required
-              maxLength={200}
-              value={fields.title}
-              onChange={(e) => setFields({ ...fields, title: e.target.value })}
-              className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="author" className="text-sm font-medium">
-              저자
-            </label>
-            <input
-              id="author"
-              name="author"
-              value={fields.author}
-              onChange={(e) => setFields({ ...fields, author: e.target.value })}
-              className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="genre" className="text-sm font-medium">
-              장르
-            </label>
-            <select
-              id="genre"
-              name="genre"
-              value={fields.genre}
-              onChange={(e) => setFields({ ...fields, genre: e.target.value })}
-              className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-            >
-              <option value="">선택 안 함</option>
-              {GENRES.map((g) => (
-                <option key={g} value={g}>
-                  {g}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex flex-col gap-1 sm:col-span-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              책 소개
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={2}
-              value={fields.description}
-              onChange={(e) =>
-                setFields({ ...fields, description: e.target.value })
-              }
-              className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-            />
-          </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="author" className="text-sm font-medium">
+            저자
+          </label>
+          <input
+            id="author"
+            name="author"
+            value={fields.author}
+            onChange={(e) => setFields({ ...fields, author: e.target.value })}
+            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+          />
         </div>
-      )}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="genre" className="text-sm font-medium">
+            장르
+          </label>
+          <select
+            id="genre"
+            name="genre"
+            value={fields.genre}
+            onChange={(e) => setFields({ ...fields, genre: e.target.value })}
+            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+          >
+            <option value="">선택 안 함</option>
+            {GENRES.map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1 sm:col-span-2">
+          <label htmlFor="description" className="text-sm font-medium">
+            책 소개
+          </label>
+          <textarea
+            id="description"
+            name="description"
+            rows={2}
+            value={fields.description}
+            onChange={(e) =>
+              setFields({ ...fields, description: e.target.value })
+            }
+            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+          />
+        </div>
+      </div>
 
       <div className="flex flex-col gap-3 border-t border-border pt-3">
         <div>

@@ -41,18 +41,16 @@ export default function LibraryClient({
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold">서재</h1>
-          {pickedCover && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={pickedCover}
-              alt="선택한 책 표지"
-              className="h-28 w-20 rounded-md object-cover shadow-md"
-            />
-          )}
-        </div>
+      <div className="flex flex-wrap items-stretch justify-between gap-3">
+        <h1 className="shrink-0 self-center text-2xl font-bold">서재</h1>
+        {pickedCover && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={pickedCover}
+            alt="선택한 책 표지"
+            className="min-h-40 min-w-0 flex-1 rounded-md object-cover shadow-md"
+          />
+        )}
         {isLoggedIn ? (
           <AddBookForm onCoverChange={setPickedCover} />
         ) : (
