@@ -167,7 +167,15 @@ export default function RecommendClient({
       </div>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-bold">지금 많이 찾는 책</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold">지금 많이 찾는 책</h2>
+          <Link
+            href="/explore"
+            className="text-sm text-muted hover:text-accent"
+          >
+            더보기 &gt;
+          </Link>
+        </div>
         <BookPosterRow
           books={mostViewed}
           metric={(book) => (

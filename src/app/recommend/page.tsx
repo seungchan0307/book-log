@@ -9,7 +9,7 @@ import {
 import RecommendClient from "@/components/RecommendClient";
 
 const MIN_REVIEWS_FOR_TOP_RATED = 10;
-const MOST_VIEWED_LIMIT = 5;
+const MOST_VIEWED_LIMIT = 6;
 
 export default async function RecommendPage() {
   const user = await getCurrentUser();

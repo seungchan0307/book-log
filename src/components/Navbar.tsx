@@ -12,18 +12,29 @@ export default async function Navbar() {
           책갈피
         </Link>
         <nav className="flex items-center gap-4 text-base">
-          <Link href="/library" className="hover:text-accent">
-            서재
-          </Link>
-          <Link href="/calendar" className="hover:text-accent">
-            독서 캘린더
-          </Link>
-          <Link href="/explore" className="hover:text-accent">
-            탐색
-          </Link>
-          <Link href="/recommend" className="hover:text-accent">
-            추천
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/library" className="hover:text-accent">
+              서재
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              /
+            </span>
+            <Link href="/calendar" className="hover:text-accent">
+              독서 캘린더
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              /
+            </span>
+            <Link href="/explore" className="hover:text-accent">
+              탐색
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              /
+            </span>
+            <Link href="/recommend" className="hover:text-accent">
+              추천
+            </Link>
+          </div>
           {user ? (
             <>
               <Link
