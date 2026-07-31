@@ -141,24 +141,25 @@ export async function addBookWithReview(
   return { success: true };
 }
 
-// Only the person who registered a book can delete it — doing so removes
-// everyone's reviews on it too (reviews.book_id cascades), since a book is
-// shared across every user's library.
-export async function deleteBook(bookId: number) {
+// Removes a book from *my* library only: my review on it (if any) and my
+// claim to having registered it. The book itself and everyone else's
+// reviews are untouched — it's a shared row, not mine to delete outright.
+export async function removeFromMyLibrary(bookId: number) {
   const user = await getCurrentUser();
   if (!user) return;
 
   const db = await getDb();
-  const result = await db.execute({
-    sql: "SELECT created_by FROM books WHERE id = ?",
-    args: [bookId],
+  await db.execute({
+    sql: "DELETE FROM reviews WHERE book_id = ? AND user_id = ?",
+    args: [bookId, user.id],
   });
-  const book = result.rows[0] as unknown as { created_by: number | null } | undefined;
-  if (!book || book.created_by !== user.id) return;
-
-  await db.execute({ sql: "DELETE FROM books WHERE id = ?", args: [bookId] });
+  await db.execute({
+    sql: "UPDATE books SET created_by = NULL WHERE id = ? AND created_by = ?",
+    args: [bookId, user.id],
+  });
 
   revalidatePath("/library");
   revalidatePath("/recommend");
   revalidatePath("/explore");
+  revalidatePath(`/books/${bookId}`);
 }

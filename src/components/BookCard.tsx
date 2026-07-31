@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { deleteBook } from "@/app/actions/books";
+import { removeFromMyLibrary } from "@/app/actions/books";
 import { StarDisplay } from "@/components/StarRating";
 import type { BookWithStats } from "@/lib/types";
 
@@ -11,26 +11,26 @@ export default function BookCard({
   book,
   isLoggedIn,
   onReview,
-  canDelete = false,
+  canRemove = false,
 }: {
   book: BookWithStats;
   isLoggedIn: boolean;
   onReview: (book: BookWithStats) => void;
-  canDelete?: boolean;
+  canRemove?: boolean;
 }) {
   const router = useRouter();
-  const [isDeleting, startDelete] = useTransition();
+  const [isRemoving, startRemove] = useTransition();
 
-  function handleDelete() {
+  function handleRemove() {
     if (
       !window.confirm(
-        "이 책을 삭제하시겠습니까? 다른 사람이 남긴 감상도 함께 삭제됩니다."
+        "내 서재에서 삭제하시겠습니까? 내가 남긴 감상만 사라지고, 책 자체와 다른 사람의 감상은 그대로 유지돼요."
       )
     ) {
       return;
     }
-    startDelete(async () => {
-      await deleteBook(book.id);
+    startRemove(async () => {
+      await removeFromMyLibrary(book.id);
       router.refresh();
     });
   }
@@ -77,13 +77,13 @@ export default function BookCard({
             >
               {book.my_rating ? "내 감상 수정" : "감상 남기기"}
             </button>
-            {canDelete && (
+            {canRemove && (
               <button
-                onClick={handleDelete}
-                disabled={isDeleting}
+                onClick={handleRemove}
+                disabled={isRemoving}
                 className="self-start rounded-md border border-border px-3 py-1 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
               >
-                {isDeleting ? "삭제 중..." : "책 삭제"}
+                {isRemoving ? "삭제 중..." : "서재에서 삭제"}
               </button>
             )}
           </div>
