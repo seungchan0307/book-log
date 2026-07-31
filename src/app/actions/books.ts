@@ -3,8 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
+import { getTopRatedBooksByGenre } from "@/lib/data";
 import { searchAladin, type AladinBookResult } from "@/lib/aladin";
 import { getCachedSearchResults, cacheSearchResults } from "@/lib/bookCache";
+import type { BookWithStats } from "@/lib/types";
 
 export type BookFormState = { error?: string; success?: boolean };
 
@@ -65,6 +67,17 @@ export async function searchAladinForExplore(
       error: e instanceof Error ? e.message : "검색 중 오류가 발생했어요.",
     };
   }
+}
+
+// Powers the recommend page's 장르별 인기 section — the genre is picked
+// interactively client-side, so this needs to be a callable action rather
+// than a plain data.ts function fetched at page render time.
+export async function fetchTopRatedBooksByGenre(
+  genre: string
+): Promise<BookWithStats[]> {
+  if (!genre) return [];
+  const user = await getCurrentUser();
+  return getTopRatedBooksByGenre(genre, user?.id ?? null, 10);
 }
 
 // Explore search results may point at a book nobody has catalogued yet.

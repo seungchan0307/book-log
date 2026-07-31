@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { fetchTopRatedBooksByGenre } from "@/app/actions/books";
 import BookCard from "@/components/BookCard";
+import GenreSelect from "@/components/GenreSelect";
 import LikeButton from "@/components/LikeButton";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
@@ -172,6 +174,21 @@ export default function RecommendClient({
     null
   );
 
+  const [genre, setGenre] = useState("");
+  const [genreBooks, setGenreBooks] = useState<BookWithStats[]>([]);
+  const [isLoadingGenre, startGenreLoad] = useTransition();
+
+  useEffect(() => {
+    startGenreLoad(async () => {
+      if (!genre) {
+        setGenreBooks([]);
+        return;
+      }
+      const books = await fetchTopRatedBooksByGenre(genre);
+      setGenreBooks(books);
+    });
+  }, [genre]);
+
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-10 px-4 py-8">
       <div>
@@ -213,6 +230,36 @@ export default function RecommendClient({
             />
           )}
         />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xl font-bold">장르별 인기</h2>
+        <GenreSelect
+          value={genre}
+          onChange={setGenre}
+          placeholder="장르를 선택해보세요"
+          clearLabel="선택 안 함"
+        />
+        {!genre ? (
+          <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
+            장르를 선택하면 그 장르에서 평점 높은 책을 보여드려요.
+          </p>
+        ) : isLoadingGenre ? (
+          <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
+            불러오는 중...
+          </p>
+        ) : (
+          <BookPosterRow
+            books={genreBooks}
+            metric={(book) => (
+              <StarDisplay
+                rating={book.avg_rating}
+                reviewCount={book.review_count}
+                size="text-sm"
+              />
+            )}
+          />
+        )}
       </section>
 
       {isLoggedIn ? (

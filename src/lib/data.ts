@@ -210,6 +210,27 @@ export async function getTopRatedBooks(
   return rowsToObjects<BookWithStats>(result);
 }
 
+// A per-genre ranking naturally has a much smaller pool than the site-wide
+// "평점 높은 책" list, so it uses a low review-count floor (just needs at
+// least one rating) instead of that section's anti-bias threshold.
+export async function getTopRatedBooksByGenre(
+  genre: string,
+  currentUserId: number | null,
+  limit = 10
+): Promise<BookWithStats[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT}
+          WHERE b.genre = ? AND ${LOOKS_LIKE_A_BOOK_WHERE}
+          GROUP BY b.id
+          HAVING review_count >= 1
+          ORDER BY avg_rating DESC, review_count DESC
+          LIMIT ?`,
+    args: [currentUserId ?? -1, currentUserId ?? -1, genre, limit],
+  });
+  return rowsToObjects<BookWithStats>(result);
+}
+
 export async function incrementBookViewCount(bookId: number): Promise<void> {
   const db = await getDb();
   await db.execute({
