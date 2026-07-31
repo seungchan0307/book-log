@@ -42,7 +42,7 @@ export async function searchAladinBooks(
   }
 }
 
-export async function addBook(
+export async function addBookWithReview(
   _prevState: BookFormState,
   formData: FormData
 ): Promise<BookFormState> {
@@ -58,6 +58,9 @@ export async function addBook(
   const description = String(formData.get("description") ?? "").trim();
   const purchaseUrl = String(formData.get("purchase_url") ?? "").trim();
   const isbn = String(formData.get("isbn") ?? "").trim();
+  const ratingRaw = String(formData.get("rating") ?? "").trim();
+  const content = String(formData.get("content") ?? "").trim();
+  const isPublic = formData.get("is_public") ? 1 : 0;
 
   if (title.length < 1 || title.length > 200) {
     return { error: "제목을 1~200자로 입력해주세요." };
@@ -71,24 +74,70 @@ export async function addBook(
   if (purchaseUrl && !/^https?:\/\//.test(purchaseUrl)) {
     return { error: "구매 링크는 http(s)로 시작해야 합니다." };
   }
+  const rating = ratingRaw ? Number(ratingRaw) : 0;
+  if (
+    rating !== 0 &&
+    (!Number.isFinite(rating) ||
+      rating < 0.5 ||
+      rating > 5 ||
+      !Number.isInteger(rating * 2))
+  ) {
+    return { error: "평점은 0.5~5점 사이에서 0.5점 단위로 선택해주세요." };
+  }
+  if (content.length > 4000) {
+    return { error: "감상평은 4000자 이내로 작성해주세요." };
+  }
 
   const db = await getDb();
-  await db.execute({
-    sql: `INSERT INTO books (title, author, genre, cover_url, description, purchase_url, isbn, created_by)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [
-      title,
-      author || null,
-      genre || null,
-      coverUrl || null,
-      description || null,
-      purchaseUrl || null,
-      isbn || null,
-      user.id,
-    ],
-  });
+
+  // Reuse an existing book (matched by ISBN, or by title+author for manual
+  // entries without one) instead of creating a duplicate row when the user
+  // is really just leaving a review on a book already in the library.
+  const existing = isbn
+    ? await db.execute({
+        sql: "SELECT id FROM books WHERE isbn = ?",
+        args: [isbn],
+      })
+    : await db.execute({
+        sql: "SELECT id FROM books WHERE title = ? AND author IS ?",
+        args: [title, author || null],
+      });
+  const existingRow = existing.rows[0] as unknown as { id: number } | undefined;
+
+  let bookId: number;
+  if (existingRow) {
+    bookId = existingRow.id;
+  } else {
+    const inserted = await db.execute({
+      sql: `INSERT INTO books (title, author, genre, cover_url, description, purchase_url, isbn, created_by)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        title,
+        author || null,
+        genre || null,
+        coverUrl || null,
+        description || null,
+        purchaseUrl || null,
+        isbn || null,
+        user.id,
+      ],
+    });
+    bookId = Number(inserted.lastInsertRowid);
+  }
+
+  if (rating > 0) {
+    await db.execute({
+      sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(book_id, user_id)
+            DO UPDATE SET rating = excluded.rating, content = excluded.content,
+              is_public = excluded.is_public, updated_at = datetime('now')`,
+      args: [bookId, user.id, rating, content || null, isPublic],
+    });
+  }
 
   revalidatePath("/library");
   revalidatePath("/recommend");
+  revalidatePath(`/books/${bookId}`);
   return { success: true };
 }
