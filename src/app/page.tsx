@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { getCurrentUser } from "@/lib/session";
+import { getTodayReadingLog } from "@/lib/data";
 import { QUOTES } from "@/lib/quotes";
 
 export default async function Home() {
   const user = await getCurrentUser();
+  const todayLog = user ? await getTodayReadingLog(user.id) : null;
   await connection(); // ensure the random quote below is picked per-request
   // eslint-disable-next-line react-hooks/purity -- intentional per-request randomness, guarded by connection() above
   const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
@@ -47,20 +49,12 @@ export default async function Home() {
 
       <div className="flex gap-3">
         {user ? (
-          <>
-            <Link
-              href="/library"
-              className="rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground hover:opacity-90"
-            >
-              나의 서재로 가기
-            </Link>
-            <Link
-              href="/recommend"
-              className="rounded-md border border-border px-5 py-2.5 font-medium hover:bg-card"
-            >
-              추천 보러 가기
-            </Link>
-          </>
+          <Link
+            href={todayLog ? "/library" : "/calendar"}
+            className="rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground hover:opacity-90"
+          >
+            책갈피 시작하기
+          </Link>
         ) : (
           <>
             <Link
