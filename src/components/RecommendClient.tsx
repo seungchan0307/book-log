@@ -223,11 +223,7 @@ export default function RecommendClient({
         <BookPosterRow
           books={topRated}
           metric={(book) => (
-            <StarDisplay
-              rating={book.avg_rating}
-              reviewCount={book.review_count}
-              size="text-sm"
-            />
+            <StarDisplay rating={book.avg_rating} size="text-sm" />
           )}
         />
       </section>
@@ -252,11 +248,7 @@ export default function RecommendClient({
           <BookPosterRow
             books={genreBooks}
             metric={(book) => (
-              <StarDisplay
-                rating={book.avg_rating}
-                reviewCount={book.review_count}
-                size="text-sm"
-              />
+              <StarDisplay rating={book.avg_rating} size="text-sm" />
             )}
           />
         )}

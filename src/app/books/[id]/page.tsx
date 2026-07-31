@@ -58,11 +58,7 @@ export default async function BookDetailPage({
           </div>
           {book.author && <p className="text-muted">{book.author}</p>}
           {book.avg_rating !== null ? (
-            <StarDisplay
-              rating={book.avg_rating}
-              reviewCount={book.review_count}
-              size="text-lg"
-            />
+            <StarDisplay rating={book.avg_rating} size="text-lg" />
           ) : (
             <p className="text-sm text-muted">
               아직 평점이 없어요. 첫 번째로 별점을 남겨보세요.

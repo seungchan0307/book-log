@@ -4,11 +4,9 @@ import { useState } from "react";
 
 export function StarDisplay({
   rating,
-  reviewCount,
   size = "text-base",
 }: {
   rating: number | null;
-  reviewCount?: number;
   size?: string;
 }) {
   const fillPercent = rating ? Math.max(0, Math.min(100, (rating / 5) * 100)) : 0;
@@ -32,7 +30,6 @@ export function StarDisplay({
       </span>
       <span className="text-muted">
         {rating !== null ? rating.toFixed(2) : "0.00"}
-        {reviewCount !== undefined && <> · {reviewCount}명 평가</>}
       </span>
     </div>
   );

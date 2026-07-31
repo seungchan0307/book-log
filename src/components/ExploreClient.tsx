@@ -193,10 +193,7 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
                     </span>
                   )}
                 </div>
-                <StarDisplay
-                  rating={book.avg_rating}
-                  reviewCount={book.review_count}
-                />
+                <StarDisplay rating={book.avg_rating} />
                 <span className="text-xs text-muted">
                   탐색 {book.view_count}회
                 </span>

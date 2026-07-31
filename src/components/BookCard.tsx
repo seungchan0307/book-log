@@ -65,7 +65,7 @@ export default function BookCard({
             </span>
           )}
         </div>
-        <StarDisplay rating={book.avg_rating} reviewCount={book.review_count} />
+        <StarDisplay rating={book.avg_rating} />
         {isLoggedIn ? (
           <div className="mt-1 flex flex-wrap gap-2">
             <button
