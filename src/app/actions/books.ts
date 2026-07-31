@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
-import { GENRES } from "@/lib/genres";
 import { searchAladin, type AladinBookResult } from "@/lib/aladin";
 import { getCachedSearchResults, cacheSearchResults } from "@/lib/bookCache";
 
@@ -65,8 +64,8 @@ export async function addBookWithReview(
   if (title.length < 1 || title.length > 200) {
     return { error: "제목을 1~200자로 입력해주세요." };
   }
-  if (genre && !(GENRES as readonly string[]).includes(genre)) {
-    return { error: "올바른 장르를 선택해주세요." };
+  if (genre.length > 20) {
+    return { error: "장르는 20자 이내로 입력해주세요." };
   }
   if (coverUrl && !/^https?:\/\//.test(coverUrl)) {
     return { error: "표지 URL은 http(s)로 시작해야 합니다." };

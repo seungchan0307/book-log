@@ -4,10 +4,10 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import AddBookForm from "@/components/AddBookForm";
 import BookCard from "@/components/BookCard";
+import GenreSelect from "@/components/GenreSelect";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
 import { deleteReview } from "@/app/actions/reviews";
-import { GENRES } from "@/lib/genres";
 import type { BookWithStats, ReviewWithBook } from "@/lib/types";
 
 export default function LibraryClient({
@@ -58,18 +58,14 @@ export default function LibraryClient({
           placeholder="제목 또는 저자로 검색"
           className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
         />
-        <select
-          value={genre}
-          onChange={(e) => setGenre(e.target.value)}
-          className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
-        >
-          <option value="">전체 장르</option>
-          {GENRES.map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
+        <div className="w-48">
+          <GenreSelect
+            value={genre}
+            onChange={setGenre}
+            placeholder="장르로 검색"
+            clearLabel="전체 장르"
+          />
+        </div>
       </div>
 
       {filtered.length === 0 ? (

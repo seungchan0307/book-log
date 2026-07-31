@@ -2,21 +2,26 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import GenreSelect from "@/components/GenreSelect";
 import { StarDisplay } from "@/components/StarRating";
 import type { BookWithStats } from "@/lib/types";
 
 export default function ExploreClient({ books }: { books: BookWithStats[] }) {
   const [search, setSearch] = useState("");
+  const [genre, setGenre] = useState("");
 
   const filtered = useMemo(() => {
-    if (!search) return books;
-    const q = search.toLowerCase();
     return books.filter((b) => {
-      const inTitle = b.title.toLowerCase().includes(q);
-      const inAuthor = (b.author ?? "").toLowerCase().includes(q);
-      return inTitle || inAuthor;
+      if (genre && b.genre !== genre) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        const inTitle = b.title.toLowerCase().includes(q);
+        const inAuthor = (b.author ?? "").toLowerCase().includes(q);
+        if (!inTitle && !inAuthor) return false;
+      }
+      return true;
     });
-  }, [books, search]);
+  }, [books, search, genre]);
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8">
@@ -27,12 +32,22 @@ export default function ExploreClient({ books }: { books: BookWithStats[] }) {
         </p>
       </div>
 
-      <input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="제목 또는 저자로 검색"
-        className="w-full rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
-      />
+      <div className="flex flex-wrap gap-2">
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="제목 또는 저자로 검색"
+          className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+        />
+        <div className="w-48">
+          <GenreSelect
+            value={genre}
+            onChange={setGenre}
+            placeholder="장르로 검색"
+            clearLabel="전체 장르"
+          />
+        </div>
+      </div>
 
       {filtered.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border p-8 text-center text-muted">

@@ -7,6 +7,7 @@ import {
   type BookFormState,
 } from "@/app/actions/books";
 import { GENRES } from "@/lib/genres";
+import GenreSelect from "@/components/GenreSelect";
 import { StarPicker } from "@/components/StarRating";
 import type { AladinBookResult } from "@/lib/aladin";
 
@@ -15,7 +16,6 @@ const initialState: BookFormState = {};
 const emptyFields = {
   title: "",
   author: "",
-  genre: "",
   coverUrl: "",
   purchaseUrl: "",
   isbn: "",
@@ -30,6 +30,8 @@ export default function AddBookForm() {
   const [handledState, setHandledState] = useState(state);
 
   const [fields, setFields] = useState(emptyFields);
+  const [genreChoice, setGenreChoice] = useState("");
+  const [customGenre, setCustomGenre] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<AladinBookResult[]>([]);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -44,6 +46,8 @@ export default function AddBookForm() {
     if (state.success) {
       setOpen(false);
       setFields(emptyFields);
+      setGenreChoice("");
+      setCustomGenre("");
       setSearchResults([]);
       setSearchQuery("");
       setResetKey((k) => k + 1);
@@ -67,13 +71,23 @@ export default function AddBookForm() {
     setFields({
       title: book.title,
       author: book.author ?? "",
-      genre: book.genre ?? "",
       coverUrl: book.cover ?? "",
       purchaseUrl: book.link ?? "",
       isbn: book.isbn || "",
     });
+    const g = book.genre ?? "";
+    if (g && !(GENRES as readonly string[]).includes(g)) {
+      setGenreChoice("기타");
+      setCustomGenre(g);
+    } else {
+      setGenreChoice(g);
+      setCustomGenre("");
+    }
     setSearchResults([]);
   }
+
+  const resolvedGenre =
+    genreChoice === "기타" ? customGenre.trim() : genreChoice;
 
   if (!open) {
     return (
@@ -201,20 +215,17 @@ export default function AddBookForm() {
           <label htmlFor="genre" className="text-sm font-medium">
             장르
           </label>
-          <select
-            id="genre"
-            name="genre"
-            value={fields.genre}
-            onChange={(e) => setFields({ ...fields, genre: e.target.value })}
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
-          >
-            <option value="">선택 안 함</option>
-            {GENRES.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
+          <input type="hidden" name="genre" value={resolvedGenre} />
+          <GenreSelect value={genreChoice} onChange={setGenreChoice} />
+          {genreChoice === "기타" && (
+            <input
+              value={customGenre}
+              onChange={(e) => setCustomGenre(e.target.value)}
+              maxLength={20}
+              placeholder="원하는 장르를 직접 입력해주세요"
+              className="mt-1 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+            />
+          )}
         </div>
       </div>
 
