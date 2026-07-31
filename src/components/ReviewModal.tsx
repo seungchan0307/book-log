@@ -46,7 +46,7 @@ export default function ReviewModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg border border-border bg-card p-5"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-border bg-card p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between">
@@ -77,7 +77,7 @@ export default function ReviewModal({
             <textarea
               id="content"
               name="content"
-              rows={4}
+              rows={12}
               defaultValue={book.my_review_content ?? ""}
               placeholder="감상평 없이 평점만 남겨도 돼요"
               className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
