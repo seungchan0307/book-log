@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -242,13 +243,14 @@ export default function ExploreClient({
                   disabled={isSearching}
                   className="flex w-full gap-3 rounded-lg border border-border bg-card p-3 text-left hover:border-accent disabled:opacity-50"
                 >
-                  <div className="flex h-16 w-11 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-lg text-muted">
+                  <div className="relative flex h-16 w-11 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-lg text-muted">
                     {b.cover ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={b.cover}
                         alt={b.title}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="44px"
+                        className="object-cover"
                       />
                     ) : (
                       "📖"
@@ -287,13 +289,14 @@ export default function ExploreClient({
               onClick={() => visitBook(book.id)}
               className="flex gap-3 rounded-lg border border-border bg-card p-4 hover:border-accent"
             >
-              <div className="flex h-24 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-2xl text-muted">
+              <div className="relative flex h-24 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-2xl text-muted">
                 {book.cover_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={book.cover_url}
                     alt={book.title}
-                    className="h-full w-full object-cover"
+                    fill
+                    sizes="64px"
+                    className="object-cover"
                   />
                 ) : (
                   "📖"

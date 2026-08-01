@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
+import Image from "next/image";
 import {
   addBookWithReview,
   searchAladinBooks,
@@ -187,13 +188,14 @@ export default function AddBookForm({
                   onClick={() => pickResult(b)}
                   className="flex w-full gap-2 rounded-md border border-border p-2 text-left hover:bg-background"
                 >
-                  <div className="flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-lg text-muted">
+                  <div className="relative flex h-14 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-lg text-muted">
                     {b.cover ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <Image
                         src={b.cover}
                         alt={b.title}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="40px"
+                        className="object-cover"
                       />
                     ) : (
                       "📖"

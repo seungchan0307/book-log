@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
@@ -39,13 +40,15 @@ export default async function BookDetailPage({
       </Link>
 
       <div className="flex gap-5">
-        <div className="flex h-40 w-28 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-4xl text-muted">
+        <div className="relative flex h-40 w-28 shrink-0 items-center justify-center overflow-hidden rounded bg-card text-4xl text-muted">
           {book.cover_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={book.cover_url}
               alt={book.title}
-              className="h-full w-full object-cover"
+              fill
+              sizes="112px"
+              priority
+              className="object-cover"
             />
           ) : (
             "📖"

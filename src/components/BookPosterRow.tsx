@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { BookWithStats } from "@/lib/types";
@@ -31,13 +32,14 @@ export default function BookPosterRow({
           onClick={() => onBookClick?.(book)}
           className="flex w-32 shrink-0 flex-col gap-1.5"
         >
-          <div className="flex h-44 w-32 items-center justify-center overflow-hidden rounded-lg bg-card text-3xl text-muted shadow-sm">
+          <div className="relative flex h-44 w-32 items-center justify-center overflow-hidden rounded-lg bg-card text-3xl text-muted shadow-sm">
             {book.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={book.cover_url}
                 alt={book.title}
-                className="h-full w-full object-cover"
+                fill
+                sizes="128px"
+                className="object-cover"
               />
             ) : (
               "📖"

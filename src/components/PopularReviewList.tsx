@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import LikeButton from "@/components/LikeButton";
 import { StarDisplay } from "@/components/StarRating";
@@ -73,14 +74,15 @@ export default function PopularReviewList({
           >
             <Link
               href={`/books/${r.book_id}`}
-              className="flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-xl text-muted"
+              className="relative flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-xl text-muted"
             >
               {r.book_cover_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={r.book_cover_url}
                   alt={r.book_title}
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="56px"
+                  className="object-cover"
                 />
               ) : (
                 "📖"

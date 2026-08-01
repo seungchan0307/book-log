@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -36,14 +37,15 @@ export default function BookCard({
     <div className="flex gap-3 rounded-lg border border-border bg-card p-4">
       <Link
         href={`/books/${book.id}`}
-        className="flex h-24 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-2xl text-muted"
+        className="relative flex h-24 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-2xl text-muted"
       >
         {book.cover_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={book.cover_url}
             alt={book.title}
-            className="h-full w-full object-cover"
+            fill
+            sizes="64px"
+            className="object-cover"
           />
         ) : (
           "📖"
