@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import Navbar from "@/components/Navbar";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,9 +16,43 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "책갈피 — 우리들의 독서 기록장",
-  description: "읽은 책의 감상과 평점을 남기고, 서로 추천을 주고받는 독서 기록장",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} — 우리들의 독서 기록장`,
+    template: `%s — ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  keywords: ["책갈피", "독서 기록", "독서 앱", "독서 다이어리", "책 추천", "독서 커뮤니티", "책 리뷰"],
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "ko_KR",
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — 우리들의 독서 기록장`,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary",
+    title: `${SITE_NAME} — 우리들의 독서 기록장`,
+    description: SITE_DESCRIPTION,
+  },
 };
+
+// Reads the saved theme (or falls back to the OS setting) and applies it to
+// <html> before first paint, so there's no flash of the wrong theme while
+// React hydrates. Must run as beforeInteractive, inline, in the root layout.
+const THEME_INIT_SCRIPT = `
+(function () {
+  try {
+    var stored = localStorage.getItem("book-log:theme");
+    var theme = stored === "light" || stored === "dark"
+      ? stored
+      : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = theme;
+  } catch (e) {}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -26,9 +62,13 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
         <Navbar />
         <main className="flex-1">{children}</main>
       </body>

@@ -266,6 +266,17 @@ export async function getTopRatedBooksByGenre(
   return rowsToObjects<BookWithStats>(result);
 }
 
+export async function getAllBookIdsForSitemap(): Promise<
+  { id: number; created_at: string }[]
+> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT b.id, b.created_at FROM books b WHERE ${LOOKS_LIKE_A_BOOK_WHERE}`,
+    args: [],
+  });
+  return rowsToObjects<{ id: number; created_at: string }>(result);
+}
+
 export async function getRecentlyAddedBooks(
   currentUserId: number | null,
   limit = 10

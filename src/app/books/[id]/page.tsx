@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,11 +10,41 @@ import {
   incrementBookViewCount,
   isBookInMyLibrary,
 } from "@/lib/data";
+import { SITE_NAME } from "@/lib/site";
 import { StarDisplay } from "@/components/StarRating";
 import BookDetailActions from "@/components/BookDetailActions";
 import GenreFixPrompt from "@/components/GenreFixPrompt";
 import PublicReviewList from "@/components/PublicReviewList";
 import RatingDistribution from "@/components/RatingDistribution";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const bookId = Number(id);
+  if (!Number.isInteger(bookId) || bookId <= 0) return {};
+
+  const book = await getBookWithStats(bookId, null);
+  if (!book) return {};
+
+  const description = book.description
+    ? book.description.slice(0, 160)
+    : `${book.author ? `${book.author} 저 · ` : ""}${SITE_NAME}에서 ${book.title}의 평점과 감상평을 확인해보세요.`;
+
+  return {
+    title: book.title,
+    description,
+    alternates: { canonical: `/books/${book.id}` },
+    openGraph: {
+      title: book.title,
+      description,
+      type: "book",
+      images: book.cover_url ? [book.cover_url] : undefined,
+    },
+  };
+}
 
 export default async function BookDetailPage({
   params,

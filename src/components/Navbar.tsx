@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { logOut } from "@/app/actions/auth";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
@@ -50,6 +51,7 @@ export default async function Navbar() {
               이야기
             </Link>
           </div>
+          <ThemeToggle />
           {user ? (
             <>
               <span className="text-border" aria-hidden="true">

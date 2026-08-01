@@ -33,8 +33,9 @@
   --text-5xl: clamp(1.75rem, 1.2rem + 2.75vw, 3rem);
 }
 
+/* Default: follow the OS setting, unless the user picked "light" on-site. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --background: #16130f;
     --foreground: #f1ece3;
     --card: #221d17;
@@ -45,8 +46,40 @@
   }
 }
 
+/* On-site override: wins over the OS setting in either direction. */
+:root[data-theme="dark"] {
+  --background: #16130f;
+  --foreground: #f1ece3;
+  --card: #221d17;
+  --border: #392f24;
+  --muted: #a89a86;
+  --accent: #e0764c;
+  --accent-foreground: #1c1108;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* ThemeToggle renders both icons always; only one is shown, based on the
+   active theme. Mirrors the same light/dark resolution as the color tokens
+   above so it never disagrees with what's actually on screen. */
+.theme-toggle-icon-dark {
+  display: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-toggle-icon-light {
+    display: none;
+  }
+  :root:not([data-theme="light"]) .theme-toggle-icon-dark {
+    display: inline;
+  }
+}
+:root[data-theme="dark"] .theme-toggle-icon-light {
+  display: none;
+}
+:root[data-theme="dark"] .theme-toggle-icon-dark {
+  display: inline;
 }
