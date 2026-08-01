@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
+import BackgroundMusicController from "@/components/BackgroundMusicController";
 import Navbar from "@/components/Navbar";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -39,17 +40,22 @@ export const metadata: Metadata = {
   },
 };
 
-// Reads the saved theme (or falls back to the OS setting) and applies it to
-// <html> before first paint, so there's no flash of the wrong theme while
-// React hydrates. Must run as beforeInteractive, inline, in the root layout.
-const THEME_INIT_SCRIPT = `
+// Reads the saved theme (or falls back to the OS setting) and the saved
+// background-music preference, applying both to <html> before first paint —
+// so there's no flash of the wrong theme, and the settings-switch CSS in
+// globals.css always has a correct data-* attribute to key off. Must run as
+// beforeInteractive, inline, in the root layout.
+const SITE_INIT_SCRIPT = `
 (function () {
   try {
-    var stored = localStorage.getItem("book-log:theme");
-    var theme = stored === "light" || stored === "dark"
-      ? stored
+    var storedTheme = localStorage.getItem("book-log:theme");
+    var theme = storedTheme === "light" || storedTheme === "dark"
+      ? storedTheme
       : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.dataset.theme = theme;
+
+    document.documentElement.dataset.bgm =
+      localStorage.getItem("book-log:bgm") === "on" ? "on" : "off";
   } catch (e) {}
 })();
 `;
@@ -66,9 +72,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <Script id="theme-init" strategy="beforeInteractive">
-          {THEME_INIT_SCRIPT}
+        <Script id="site-init" strategy="beforeInteractive">
+          {SITE_INIT_SCRIPT}
         </Script>
+        <BackgroundMusicController />
         <Navbar />
         <main className="flex-1">{children}</main>
       </body>

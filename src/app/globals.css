@@ -63,23 +63,29 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* ThemeToggle renders both icons always; only one is shown, based on the
-   active theme. Mirrors the same light/dark resolution as the color tokens
-   above so it never disagrees with what's actually on screen. */
-.theme-toggle-icon-dark {
-  display: none;
-}
+/* SettingsToggleRow switches (다크 모드 / 배경음악 on profile): the on/off
+   visual is driven by the matching data-* attribute on <html> rather than
+   React state, so it can never disagree with the actual setting or cause a
+   hydration mismatch. */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .theme-toggle-icon-light {
-    display: none;
+  :root:not([data-theme="light"])
+    .settings-switch-track[data-switch-for="theme"] {
+    background: var(--accent);
   }
-  :root:not([data-theme="light"]) .theme-toggle-icon-dark {
-    display: inline;
+  :root:not([data-theme="light"])
+    .settings-switch-thumb[data-switch-for="theme"] {
+    transform: translateX(1.25rem);
   }
 }
-:root[data-theme="dark"] .theme-toggle-icon-light {
-  display: none;
+:root[data-theme="dark"] .settings-switch-track[data-switch-for="theme"] {
+  background: var(--accent);
 }
-:root[data-theme="dark"] .theme-toggle-icon-dark {
-  display: inline;
+:root[data-theme="dark"] .settings-switch-thumb[data-switch-for="theme"] {
+  transform: translateX(1.25rem);
+}
+:root[data-bgm="on"] .settings-switch-track[data-switch-for="bgm"] {
+  background: var(--accent);
+}
+:root[data-bgm="on"] .settings-switch-thumb[data-switch-for="bgm"] {
+  transform: translateX(1.25rem);
 }
