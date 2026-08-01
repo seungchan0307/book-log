@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
-import { getGenreDistribution, getMonthlyReadingCounts } from "@/lib/data";
+import {
+  getGenreDistribution,
+  getMonthlyReadingCounts,
+  getReadingStatsSummary,
+} from "@/lib/data";
 import GenreDistributionChart from "@/components/GenreDistributionChart";
 import MonthlyReadingChart from "@/components/MonthlyReadingChart";
+import StatSummary from "@/components/StatSummary";
 
 export default async function StatsPage() {
   const user = await getCurrentUser();
@@ -26,6 +31,7 @@ export default async function StatsPage() {
 
   const monthlyCounts = await getMonthlyReadingCounts(user.id);
   const genreDistribution = await getGenreDistribution(user.id);
+  const summary = await getReadingStatsSummary(user.id);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
@@ -35,6 +41,8 @@ export default async function StatsPage() {
           지금까지 읽은 책을 숫자로 돌아봐요.
         </p>
       </div>
+
+      <StatSummary summary={summary} />
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">월별 독서량</h2>

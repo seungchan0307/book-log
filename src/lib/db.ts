@@ -204,6 +204,19 @@ async function initSchema(client: Client) {
     )
     WHERE status = 'finished' AND finished_at IS NULL
   `);
+  // Backfill (part 2): reviews left before reading_status existed have no
+  // row there at all — LibraryClient has always treated that specific gap
+  // as "읽은 책". Materialize it as a real finished row instead of leaving
+  // every stats/goal query to special-case the gap.
+  await client.execute(`
+    INSERT INTO reading_status (user_id, book_id, status, finished_at, created_at, updated_at)
+    SELECT r.user_id, r.book_id, 'finished', r.created_at, r.created_at, r.created_at
+    FROM reviews r
+    WHERE NOT EXISTS (
+      SELECT 1 FROM reading_status rs
+      WHERE rs.user_id = r.user_id AND rs.book_id = r.book_id
+    )
+  `);
 
   // Migration guard: reviews.rating started as INTEGER (whole stars only).
   // SQLite can't ALTER a column's type/CHECK in place, so rebuild the table

@@ -101,3 +101,9 @@ export type GenreDistributionRow = {
   genre: string;
   count: number;
 };
+
+export type ReadingStatsSummary = {
+  totalFinished: number;
+  avgRating: number | null;
+  favoriteGenre: { genre: string; avgRating: number } | null;
+};

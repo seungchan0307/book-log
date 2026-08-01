@@ -10,6 +10,7 @@ import type {
   PublicReview,
   RatingDistributionRow,
   ReadingLog,
+  ReadingStatsSummary,
   ReviewWithBook,
 } from "@/lib/types";
 
@@ -534,6 +535,51 @@ export async function getCurrentMonthReadCount(userId: number): Promise<number> 
     args: [userId],
   });
   return rowsToObjects<{ count: number }>(result)[0].count;
+}
+
+export async function getReadingStatsSummary(
+  userId: number
+): Promise<ReadingStatsSummary> {
+  const db = await getDb();
+
+  const totalResult = await db.execute({
+    sql: `SELECT COUNT(*) AS count FROM reading_status
+          WHERE user_id = ? AND status = 'finished'`,
+    args: [userId],
+  });
+  const totalFinished = rowsToObjects<{ count: number }>(totalResult)[0].count;
+
+  const avgResult = await db.execute({
+    sql: "SELECT ROUND(AVG(rating), 2) AS avg_rating FROM reviews WHERE user_id = ?",
+    args: [userId],
+  });
+  const avgRating = rowsToObjects<{ avg_rating: number | null }>(avgResult)[0]
+    .avg_rating;
+
+  // Ranked by average rating (not review count, which is 장르 분포's job) —
+  // "가장 좋아하는" is about how much they enjoyed a genre, not how often
+  // they read it.
+  const genreResult = await db.execute({
+    sql: `SELECT b.genre AS genre, ROUND(AVG(r.rating), 2) AS avg_rating
+          FROM reviews r
+          JOIN books b ON b.id = r.book_id
+          WHERE r.user_id = ? AND b.genre IS NOT NULL
+          GROUP BY b.genre
+          ORDER BY avg_rating DESC, COUNT(*) DESC
+          LIMIT 1`,
+    args: [userId],
+  });
+  const genreRow = rowsToObjects<{ genre: string; avg_rating: number }>(
+    genreResult
+  )[0];
+
+  return {
+    totalFinished,
+    avgRating,
+    favoriteGenre: genreRow
+      ? { genre: genreRow.genre, avgRating: genreRow.avg_rating }
+      : null,
+  };
 }
 
 export async function getMonthlyGoal(userId: number): Promise<number | null> {
