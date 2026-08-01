@@ -181,6 +181,30 @@ async function initSchema(client: Client) {
     // column already exists
   }
 
+  // Migration guard: finished_at was added after reading_status already
+  // existed in production. Set once, the first time a book reaches
+  // 'finished', and never overwritten afterward — unlike updated_at, which
+  // bumps on every edit, so it can't double-count a book across months.
+  try {
+    await client.execute("ALTER TABLE reading_status ADD COLUMN finished_at TEXT");
+  } catch {
+    // column already exists
+  }
+  // Backfill: books already marked finished before this column existed get
+  // a best-effort finished_at (their review's created_at, or their
+  // reading_status row's updated_at as a fallback) so past months in the
+  // 월별 독서량 chart aren't retroactively emptied out. Only touches rows
+  // still NULL, so it's a no-op after the first run.
+  await client.execute(`
+    UPDATE reading_status
+    SET finished_at = COALESCE(
+      (SELECT r.created_at FROM reviews r
+        WHERE r.book_id = reading_status.book_id AND r.user_id = reading_status.user_id),
+      reading_status.updated_at
+    )
+    WHERE status = 'finished' AND finished_at IS NULL
+  `);
+
   // Migration guard: reviews.rating started as INTEGER (whole stars only).
   // SQLite can't ALTER a column's type/CHECK in place, so rebuild the table
   // when the old integer-only constraint is still present.

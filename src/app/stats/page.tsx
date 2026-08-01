@@ -1,13 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
-import {
-  getCurrentMonthReadCount,
-  getGenreDistribution,
-  getMonthlyGoal,
-  getMonthlyReadingCounts,
-} from "@/lib/data";
+import { getGenreDistribution, getMonthlyReadingCounts } from "@/lib/data";
 import GenreDistributionChart from "@/components/GenreDistributionChart";
-import MonthlyGoalCard from "@/components/MonthlyGoalCard";
 import MonthlyReadingChart from "@/components/MonthlyReadingChart";
 
 export default async function StatsPage() {
@@ -18,7 +12,7 @@ export default async function StatsPage() {
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
         <h1 className="text-2xl font-bold">통계</h1>
         <p className="text-muted">
-          로그인하면 월별 독서량과 장르 분포, 이번 달 목표를 확인할 수 있어요.
+          로그인하면 월별 독서량과 장르 분포를 확인할 수 있어요.
         </p>
         <Link
           href="/login"
@@ -32,8 +26,6 @@ export default async function StatsPage() {
 
   const monthlyCounts = await getMonthlyReadingCounts(user.id);
   const genreDistribution = await getGenreDistribution(user.id);
-  const currentMonthCount = await getCurrentMonthReadCount(user.id);
-  const monthlyGoal = await getMonthlyGoal(user.id);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-8">
@@ -44,13 +36,11 @@ export default async function StatsPage() {
         </p>
       </div>
 
-      <MonthlyGoalCard currentCount={currentMonthCount} goal={monthlyGoal} />
-
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">월별 독서량</h2>
         {monthlyCounts.every((m) => m.count === 0) ? (
           <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-            아직 남긴 감상이 없어요.
+            아직 다 읽은 책이 없어요.
           </p>
         ) : (
           <div className="rounded-lg border border-border bg-card p-4">

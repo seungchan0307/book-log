@@ -476,18 +476,19 @@ export async function getMonthReadingDays(
   return days;
 }
 
-// A book counts as "read in month X" the month it was first rated —
-// reviews.created_at doesn't move on later edits, unlike updated_at, so
-// this stays stable even if the rating/content changes afterward.
+// A book counts as "read in month X" the month its reading_status first
+// reached 'finished' — finished_at is set once and never moved by later
+// edits (see upsertReadingStatusAndReview), so re-saving a review doesn't
+// shift it into a different month.
 export async function getMonthlyReadingCounts(
   userId: number,
   months = 12
 ): Promise<MonthlyReadingCount[]> {
   const db = await getDb();
   const result = await db.execute({
-    sql: `SELECT strftime('%Y-%m', created_at) AS month, COUNT(*) AS count
-          FROM reviews
-          WHERE user_id = ?
+    sql: `SELECT strftime('%Y-%m', finished_at) AS month, COUNT(*) AS count
+          FROM reading_status
+          WHERE user_id = ? AND status = 'finished' AND finished_at IS NOT NULL
           GROUP BY month`,
     args: [userId],
   });
@@ -527,8 +528,9 @@ export async function getGenreDistribution(
 export async function getCurrentMonthReadCount(userId: number): Promise<number> {
   const db = await getDb();
   const result = await db.execute({
-    sql: `SELECT COUNT(*) AS count FROM reviews
-          WHERE user_id = ? AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`,
+    sql: `SELECT COUNT(*) AS count FROM reading_status
+          WHERE user_id = ? AND status = 'finished'
+            AND strftime('%Y-%m', finished_at) = strftime('%Y-%m', 'now')`,
     args: [userId],
   });
   return rowsToObjects<{ count: number }>(result)[0].count;

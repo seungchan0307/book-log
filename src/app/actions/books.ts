@@ -72,11 +72,21 @@ async function upsertReadingStatusAndReview(
     });
   }
 
+  // finished_at is set once, the first time this book reaches 'finished',
+  // and preserved on every later upsert (edits, re-saves, status toggles)
+  // so it reflects when the book was actually finished, not last touched.
   await db.execute({
-    sql: `INSERT INTO reading_status (user_id, book_id, status) VALUES (?, ?, ?)
-          ON CONFLICT(user_id, book_id)
-          DO UPDATE SET status = excluded.status, updated_at = datetime('now')`,
-    args: [userId, bookId, readingStatus],
+    sql: `INSERT INTO reading_status (user_id, book_id, status, finished_at)
+          VALUES (?, ?, ?, CASE WHEN ? = 'finished' THEN datetime('now') ELSE NULL END)
+          ON CONFLICT(user_id, book_id) DO UPDATE SET
+            status = excluded.status,
+            updated_at = datetime('now'),
+            finished_at = CASE
+              WHEN reading_status.finished_at IS NOT NULL THEN reading_status.finished_at
+              WHEN excluded.status = 'finished' THEN datetime('now')
+              ELSE reading_status.finished_at
+            END`,
+    args: [userId, bookId, readingStatus, readingStatus],
   });
 
   // Registering (or re-registering) a book is an explicit "put this back on

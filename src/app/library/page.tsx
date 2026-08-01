@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
-import { listMyBooksWithStats, listMyReviews } from "@/lib/data";
+import {
+  getCurrentMonthReadCount,
+  getMonthlyGoal,
+  listMyBooksWithStats,
+  listMyReviews,
+} from "@/lib/data";
 import LibraryClient from "@/components/LibraryClient";
 
 export default async function LibraryPage() {
@@ -25,6 +30,15 @@ export default async function LibraryPage() {
 
   const books = await listMyBooksWithStats(user.id);
   const myReviews = await listMyReviews(user.id);
+  const currentMonthCount = await getCurrentMonthReadCount(user.id);
+  const monthlyGoal = await getMonthlyGoal(user.id);
 
-  return <LibraryClient books={books} myReviews={myReviews} />;
+  return (
+    <LibraryClient
+      books={books}
+      myReviews={myReviews}
+      currentMonthCount={currentMonthCount}
+      monthlyGoal={monthlyGoal}
+    />
+  );
 }

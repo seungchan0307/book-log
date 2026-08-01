@@ -6,6 +6,7 @@ import Link from "next/link";
 import AddBookForm from "@/components/AddBookForm";
 import BookCard from "@/components/BookCard";
 import GenreSelect from "@/components/GenreSelect";
+import MonthlyGoalCard from "@/components/MonthlyGoalCard";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
 import { deleteReview } from "@/app/actions/reviews";
@@ -29,9 +30,13 @@ const READING_STATUS_ORDER: BookReadingStatus[] = [
 export default function LibraryClient({
   books,
   myReviews,
+  currentMonthCount,
+  monthlyGoal,
 }: {
   books: BookWithStats[];
   myReviews: ReviewWithBook[];
+  currentMonthCount: number;
+  monthlyGoal: number | null;
 }) {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
@@ -99,6 +104,8 @@ export default function LibraryClient({
 
       {!addOpen && (
         <>
+          <MonthlyGoalCard currentCount={currentMonthCount} goal={monthlyGoal} />
+
           <div className="flex flex-wrap gap-2">
             <input
               value={search}
