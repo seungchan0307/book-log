@@ -4,12 +4,15 @@ import { getCurrentUser } from "@/lib/session";
 import {
   getBookWithStats,
   getPublicReviewsForBook,
+  getRatingDistribution,
   incrementBookViewCount,
   isBookInMyLibrary,
 } from "@/lib/data";
 import { StarDisplay } from "@/components/StarRating";
 import BookDetailActions from "@/components/BookDetailActions";
+import GenreFixPrompt from "@/components/GenreFixPrompt";
 import PublicReviewList from "@/components/PublicReviewList";
+import RatingDistribution from "@/components/RatingDistribution";
 
 export default async function BookDetailPage({
   params,
@@ -26,6 +29,7 @@ export default async function BookDetailPage({
 
   await incrementBookViewCount(bookId);
   const publicReviews = await getPublicReviewsForBook(bookId, user?.id ?? null);
+  const ratingDistribution = await getRatingDistribution(bookId);
   const inLibrary = user ? await isBookInMyLibrary(bookId, user.id) : false;
 
   return (
@@ -56,9 +60,13 @@ export default async function BookDetailPage({
               </span>
             )}
           </div>
+          {!book.genre && user && <GenreFixPrompt bookId={book.id} />}
           {book.author && <p className="text-muted">{book.author}</p>}
           {book.avg_rating !== null ? (
-            <StarDisplay rating={book.avg_rating} size="text-lg" />
+            <div className="flex flex-col gap-2">
+              <StarDisplay rating={book.avg_rating} size="text-lg" />
+              <RatingDistribution distribution={ratingDistribution} />
+            </div>
           ) : (
             <p className="text-sm text-muted">
               아직 평점이 없어요. 첫 번째로 별점을 남겨보세요.

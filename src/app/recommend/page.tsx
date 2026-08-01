@@ -2,7 +2,6 @@ import { getCurrentUser } from "@/lib/session";
 import {
   getMostViewedBooks,
   getPersonalizedRecommendations,
-  getPopularReviews,
   getTopRatedBooks,
   hasFavoriteGenres,
 } from "@/lib/data";
@@ -14,7 +13,6 @@ const MOST_VIEWED_LIMIT = 6;
 export default async function RecommendPage() {
   const user = await getCurrentUser();
   const userId = user?.id ?? null;
-  const popularReviews = await getPopularReviews(userId, 20);
   const mostViewed = await getMostViewedBooks(userId, MOST_VIEWED_LIMIT);
   const topRated = await getTopRatedBooks(
     userId,
@@ -28,7 +26,6 @@ export default async function RecommendPage() {
 
   return (
     <RecommendClient
-      popularReviews={popularReviews}
       mostViewed={mostViewed}
       topRated={topRated}
       personalized={personalized}

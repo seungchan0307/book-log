@@ -5,10 +5,9 @@ import Link from "next/link";
 import { fetchTopRatedBooksByGenre } from "@/app/actions/books";
 import BookCard from "@/components/BookCard";
 import GenreSelect from "@/components/GenreSelect";
-import PopularReviewList from "@/components/PopularReviewList";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
-import type { BookWithStats, PopularReview } from "@/lib/types";
+import type { BookWithStats } from "@/lib/types";
 
 function BookGrid({
   books,
@@ -87,14 +86,12 @@ function BookPosterRow({
 }
 
 export default function RecommendClient({
-  popularReviews,
   mostViewed,
   topRated,
   personalized,
   isLoggedIn,
   hasFavoriteGenres,
 }: {
-  popularReviews: PopularReview[];
   mostViewed: BookWithStats[];
   topRated: BookWithStats[];
   personalized: BookWithStats[];
@@ -205,19 +202,6 @@ export default function RecommendClient({
             )}
           />
         )}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold">많이 본 감상평</h2>
-          <Link
-            href="/community"
-            className="text-sm text-muted hover:text-accent"
-          >
-            더보기 &gt;
-          </Link>
-        </div>
-        <PopularReviewList reviews={popularReviews} isLoggedIn={isLoggedIn} />
       </section>
 
       {reviewTarget && (

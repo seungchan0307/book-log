@@ -86,3 +86,8 @@ export type DayStatus = {
   date: string;
   status: ReadingLogStatus | null;
 };
+
+export type RatingDistributionRow = {
+  star: number;
+  count: number;
+};

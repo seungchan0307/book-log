@@ -6,6 +6,7 @@ import type {
   DayStatus,
   PopularReview,
   PublicReview,
+  RatingDistributionRow,
   ReadingLog,
   ReviewWithBook,
 } from "@/lib/types";
@@ -136,6 +137,27 @@ export async function getPublicReviewsForBook(
     args: [excludeUserId ?? -1, bookId, excludeUserId ?? -1],
   });
   return rowsToObjects<PublicReview>(result);
+}
+
+// Ratings are entered in 0.5 steps but the distribution is shown per whole
+// star (SQLite's ROUND is half-away-from-zero, so 4.5 buckets into 5).
+export async function getRatingDistribution(
+  bookId: number
+): Promise<RatingDistributionRow[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT CAST(ROUND(rating) AS INTEGER) AS star, COUNT(*) AS count
+          FROM reviews
+          WHERE book_id = ? AND rating > 0
+          GROUP BY star`,
+    args: [bookId],
+  });
+  const rows = rowsToObjects<RatingDistributionRow>(result);
+  const byStar = new Map(rows.map((r) => [r.star, r.count]));
+  return [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    count: byStar.get(star) ?? 0,
+  }));
 }
 
 export async function listMyReviews(userId: number): Promise<ReviewWithBook[]> {

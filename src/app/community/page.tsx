@@ -16,7 +16,7 @@ export default async function CommunityPage() {
           다른 독자들의 감상평을 구경해보세요.
         </p>
       </div>
-      <PopularReviewList reviews={reviews} isLoggedIn={Boolean(user)} sortable />
+      <PopularReviewList reviews={reviews} isLoggedIn={Boolean(user)} />
     </div>
   );
 }

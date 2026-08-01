@@ -11,16 +11,13 @@ type SortMode = "latest" | "popular";
 export default function PopularReviewList({
   reviews,
   isLoggedIn,
-  sortable = false,
 }: {
   reviews: PopularReview[];
   isLoggedIn: boolean;
-  sortable?: boolean;
 }) {
   const [sort, setSort] = useState<SortMode>("latest");
 
   const sorted = useMemo(() => {
-    if (!sortable) return reviews;
     const copy = [...reviews];
     if (sort === "popular") {
       copy.sort(
@@ -32,7 +29,7 @@ export default function PopularReviewList({
       copy.sort((a, b) => b.updated_at.localeCompare(a.updated_at));
     }
     return copy;
-  }, [reviews, sort, sortable]);
+  }, [reviews, sort]);
 
   if (reviews.length === 0) {
     return (
@@ -44,32 +41,30 @@ export default function PopularReviewList({
 
   return (
     <div className="flex flex-col gap-3">
-      {sortable && (
-        <div className="flex gap-2 text-sm">
-          <button
-            type="button"
-            onClick={() => setSort("latest")}
-            className={`rounded-md border px-3 py-1 ${
-              sort === "latest"
-                ? "border-accent bg-accent text-accent-foreground"
-                : "border-border hover:bg-card"
-            }`}
-          >
-            최신순
-          </button>
-          <button
-            type="button"
-            onClick={() => setSort("popular")}
-            className={`rounded-md border px-3 py-1 ${
-              sort === "popular"
-                ? "border-accent bg-accent text-accent-foreground"
-                : "border-border hover:bg-card"
-            }`}
-          >
-            인기순
-          </button>
-        </div>
-      )}
+      <div className="flex gap-2 text-sm">
+        <button
+          type="button"
+          onClick={() => setSort("latest")}
+          className={`rounded-md border px-3 py-1 ${
+            sort === "latest"
+              ? "border-accent bg-accent text-accent-foreground"
+              : "border-border hover:bg-card"
+          }`}
+        >
+          최신순
+        </button>
+        <button
+          type="button"
+          onClick={() => setSort("popular")}
+          className={`rounded-md border px-3 py-1 ${
+            sort === "popular"
+              ? "border-accent bg-accent text-accent-foreground"
+              : "border-border hover:bg-card"
+          }`}
+        >
+          인기순
+        </button>
+      </div>
       <ul className="flex flex-col gap-3">
         {sorted.map((r) => (
           <li
@@ -110,8 +105,7 @@ export default function PopularReviewList({
               )}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted">
-                  {r.reviewer_nickname}
-                  {sortable && ` · ${r.updated_at.slice(0, 10)}`}
+                  {r.reviewer_nickname} · {r.updated_at.slice(0, 10)}
                 </span>
                 <LikeButton
                   reviewId={r.id}

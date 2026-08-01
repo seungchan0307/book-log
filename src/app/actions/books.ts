@@ -372,3 +372,30 @@ export async function removeFromMyLibrary(
   revalidatePath("/explore");
   revalidatePath(`/books/${bookId}`);
 }
+
+// Books created via ISBN lookup (explore search, 책 등록하기) start without a
+// genre — Aladin's API doesn't return one. This lets anyone fill it in after
+// the fact; it only ever sets a genre that's still missing, never overwrites
+// one someone already picked.
+export async function setBookGenre(
+  bookId: number,
+  genre: string
+): Promise<{ error?: string; success?: true }> {
+  const user = await getCurrentUser();
+  if (!user) return { error: "로그인이 필요합니다." };
+
+  const trimmed = genre.trim();
+  if (!trimmed) return { error: "장르를 선택해주세요." };
+  if (trimmed.length > 20) return { error: "장르는 20자 이내로 입력해주세요." };
+
+  const db = await getDb();
+  await db.execute({
+    sql: "UPDATE books SET genre = ? WHERE id = ? AND genre IS NULL",
+    args: [trimmed, bookId],
+  });
+
+  revalidatePath(`/books/${bookId}`);
+  revalidatePath("/recommend");
+  revalidatePath("/explore");
+  return { success: true };
+}
