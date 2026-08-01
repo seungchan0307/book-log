@@ -22,7 +22,7 @@ type AladinApiItem = {
   link?: string;
 };
 
-const ALADIN_ITEM_SEARCH_URL = "http://www.aladin.co.kr/ttb/api/ItemSearch.aspx";
+const ALADIN_ITEM_SEARCH_URL = "https://www.aladin.co.kr/ttb/api/ItemSearch.aspx";
 
 // Aladin's author field bundles every contributor and role together, e.g.
 // "베르나르 베르베르 (지은이), 이세욱 (옮긴이)". We only want the writer(s),

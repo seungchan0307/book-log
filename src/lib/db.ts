@@ -105,6 +105,17 @@ async function initSchema(client: Client) {
         searched_at TEXT NOT NULL DEFAULT (datetime('now')),
         PRIMARY KEY (user_id, book_id)
       )`,
+      // Shared by login and password-reset — both are guessing attacks
+      // against a username (password vs. low-entropy birthdate), so both
+      // get locked out the same way. Not tied to a real user row since
+      // tracking attempts against usernames that don't exist is exactly
+      // what stops enumeration.
+      `CREATE TABLE IF NOT EXISTS login_attempts (
+        username TEXT PRIMARY KEY,
+        failed_count INTEGER NOT NULL DEFAULT 0,
+        locked_until TEXT,
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
       // Separate from reviews since 읽는 중 / 읽을 예정 don't have a rating —
       // reviews.rating stays NOT NULL and only real reviews live there.
       `CREATE TABLE IF NOT EXISTS reading_status (

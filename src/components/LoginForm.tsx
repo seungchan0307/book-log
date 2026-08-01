@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { logIn, type AuthFormState } from "@/app/actions/auth";
 
 const initialState: AuthFormState = {};
@@ -33,6 +34,12 @@ export default function LoginForm() {
           required
           className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
         />
+        <Link
+          href="/reset-password"
+          className="self-end text-xs text-muted hover:text-accent"
+        >
+          비밀번호를 잊으셨나요?
+        </Link>
       </div>
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
       <button
