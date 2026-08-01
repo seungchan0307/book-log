@@ -91,3 +91,13 @@ export type RatingDistributionRow = {
   star: number;
   count: number;
 };
+
+export type MonthlyReadingCount = {
+  month: string;
+  count: number;
+};
+
+export type GenreDistributionRow = {
+  genre: string;
+  count: number;
+};

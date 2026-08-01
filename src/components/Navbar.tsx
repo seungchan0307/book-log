@@ -28,6 +28,12 @@ export default async function Navbar() {
             <span className="text-border" aria-hidden="true">
               /
             </span>
+            <Link href="/stats" className="hover:text-accent">
+              통계
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              /
+            </span>
             <Link href="/explore" className="hover:text-accent">
               탐색
             </Link>

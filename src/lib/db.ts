@@ -173,6 +173,14 @@ async function initSchema(client: Client) {
     // column already exists
   }
 
+  // Migration guard: monthly_goal (통계 페이지의 "이번 달 목표") was added
+  // after the users table already existed in production.
+  try {
+    await client.execute("ALTER TABLE users ADD COLUMN monthly_goal INTEGER");
+  } catch {
+    // column already exists
+  }
+
   // Migration guard: reviews.rating started as INTEGER (whole stars only).
   // SQLite can't ALTER a column's type/CHECK in place, so rebuild the table
   // when the old integer-only constraint is still present.

@@ -4,6 +4,8 @@ import type {
   BookOption,
   BookWithStats,
   DayStatus,
+  GenreDistributionRow,
+  MonthlyReadingCount,
   PopularReview,
   PublicReview,
   RatingDistributionRow,
@@ -472,4 +474,71 @@ export async function getMonthReadingDays(
     days.push({ date, status: statusByDate.get(date) ?? null });
   }
   return days;
+}
+
+// A book counts as "read in month X" the month it was first rated —
+// reviews.created_at doesn't move on later edits, unlike updated_at, so
+// this stays stable even if the rating/content changes afterward.
+export async function getMonthlyReadingCounts(
+  userId: number,
+  months = 12
+): Promise<MonthlyReadingCount[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT strftime('%Y-%m', created_at) AS month, COUNT(*) AS count
+          FROM reviews
+          WHERE user_id = ?
+          GROUP BY month`,
+    args: [userId],
+  });
+  const byMonth = new Map(
+    rowsToObjects<{ month: string; count: number }>(result).map((r) => [
+      r.month,
+      r.count,
+    ])
+  );
+
+  const now = new Date();
+  const counts: MonthlyReadingCount[] = [];
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    counts.push({ month: key, count: byMonth.get(key) ?? 0 });
+  }
+  return counts;
+}
+
+export async function getGenreDistribution(
+  userId: number
+): Promise<GenreDistributionRow[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT COALESCE(b.genre, '미분류') AS genre, COUNT(*) AS count
+          FROM reviews r
+          JOIN books b ON b.id = r.book_id
+          WHERE r.user_id = ?
+          GROUP BY genre
+          ORDER BY count DESC`,
+    args: [userId],
+  });
+  return rowsToObjects<GenreDistributionRow>(result);
+}
+
+export async function getCurrentMonthReadCount(userId: number): Promise<number> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT COUNT(*) AS count FROM reviews
+          WHERE user_id = ? AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`,
+    args: [userId],
+  });
+  return rowsToObjects<{ count: number }>(result)[0].count;
+}
+
+export async function getMonthlyGoal(userId: number): Promise<number | null> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: "SELECT monthly_goal FROM users WHERE id = ?",
+    args: [userId],
+  });
+  return rowsToObjects<{ monthly_goal: number | null }>(result)[0]?.monthly_goal ?? null;
 }
