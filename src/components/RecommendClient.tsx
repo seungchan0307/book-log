@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { fetchTopRatedBooksByGenre } from "@/app/actions/books";
 import BookCard from "@/components/BookCard";
+import BookPosterRow from "@/components/BookPosterRow";
 import GenreSelect from "@/components/GenreSelect";
 import ReviewModal from "@/components/ReviewModal";
 import { StarDisplay } from "@/components/StarRating";
@@ -34,52 +35,6 @@ function BookGrid({
           isLoggedIn={isLoggedIn}
           onReview={onReview}
         />
-      ))}
-    </div>
-  );
-}
-
-// A horizontally-scrolling, cover-forward row — meant to read as "책갈피가
-// 골라서 먼저 보여주는" curated picks, not a plain list.
-function BookPosterRow({
-  books,
-  metric,
-}: {
-  books: BookWithStats[];
-  metric: (book: BookWithStats) => React.ReactNode;
-}) {
-  if (books.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-        아직 보여줄 책이 없어요.
-      </p>
-    );
-  }
-  return (
-    <div className="flex gap-3 overflow-x-auto pb-2">
-      {books.map((book) => (
-        <Link
-          key={book.id}
-          href={`/books/${book.id}`}
-          className="flex w-32 shrink-0 flex-col gap-1.5"
-        >
-          <div className="flex h-44 w-32 items-center justify-center overflow-hidden rounded-lg bg-card text-3xl text-muted shadow-sm">
-            {book.cover_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={book.cover_url}
-                alt={book.title}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              "📖"
-            )}
-          </div>
-          <p className="line-clamp-2 text-sm font-medium leading-snug">
-            {book.title}
-          </p>
-          {metric(book)}
-        </Link>
       ))}
     </div>
   );

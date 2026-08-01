@@ -263,6 +263,41 @@ export async function getTopRatedBooksByGenre(
   return rowsToObjects<BookWithStats>(result);
 }
 
+export async function getRecentlyAddedBooks(
+  currentUserId: number | null,
+  limit = 10
+): Promise<BookWithStats[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT}
+          WHERE ${LOOKS_LIKE_A_BOOK_WHERE}
+          GROUP BY b.id
+          ORDER BY b.created_at DESC
+          LIMIT ?`,
+    args: [currentUserId ?? -1, currentUserId ?? -1, limit],
+  });
+  return rowsToObjects<BookWithStats>(result);
+}
+
+// searched_at is bumped (not just inserted) on every click-through, so
+// MAX() picks the latest visit even though the reviews JOIN can fan a book
+// out into multiple rows before GROUP BY collapses it back down.
+export async function getRecentSearchHistory(
+  userId: number,
+  limit = 10
+): Promise<BookWithStats[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `${BOOK_STATS_SELECT}
+          JOIN search_history sh ON sh.book_id = b.id AND sh.user_id = ?
+          GROUP BY b.id
+          ORDER BY MAX(sh.searched_at) DESC
+          LIMIT ?`,
+    args: [userId, userId, userId, limit],
+  });
+  return rowsToObjects<BookWithStats>(result);
+}
+
 export async function incrementBookViewCount(bookId: number): Promise<void> {
   const db = await getDb();
   await db.execute({

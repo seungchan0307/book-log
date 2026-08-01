@@ -96,6 +96,15 @@ async function initSchema(client: Client) {
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         PRIMARY KEY (user_id, review_id)
       )`,
+      // Bumped (not inserted fresh) on every click-through from an explore
+      // search, so "최근 검색한 책" reflects the last time each book was
+      // searched, not the first.
+      `CREATE TABLE IF NOT EXISTS search_history (
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+        searched_at TEXT NOT NULL DEFAULT (datetime('now')),
+        PRIMARY KEY (user_id, book_id)
+      )`,
       // Separate from reviews since 읽는 중 / 읽을 예정 don't have a rating —
       // reviews.rating stays NOT NULL and only real reviews live there.
       `CREATE TABLE IF NOT EXISTS reading_status (
@@ -112,6 +121,7 @@ async function initSchema(client: Client) {
       `CREATE INDEX IF NOT EXISTS idx_reading_logs_user_date ON reading_logs(user_id, log_date)`,
       `CREATE INDEX IF NOT EXISTS idx_aladin_cache_title ON aladin_search_cache(title)`,
       `CREATE INDEX IF NOT EXISTS idx_review_likes_review_id ON review_likes(review_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_search_history_user ON search_history(user_id, searched_at)`,
     ],
     "write"
   );

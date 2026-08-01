@@ -373,6 +373,20 @@ export async function removeFromMyLibrary(
   revalidatePath(`/books/${bookId}`);
 }
 
+// Fire-and-forget from explore whenever a search actually led somewhere —
+// upsert so "최근 검색한 책" reflects the latest visit, not the first one.
+export async function recordSearchHistory(bookId: number): Promise<void> {
+  const user = await getCurrentUser();
+  if (!user) return;
+
+  const db = await getDb();
+  await db.execute({
+    sql: `INSERT INTO search_history (user_id, book_id) VALUES (?, ?)
+          ON CONFLICT(user_id, book_id) DO UPDATE SET searched_at = datetime('now')`,
+    args: [user.id, bookId],
+  });
+}
+
 // Books created via ISBN lookup (explore search, 책 등록하기) start without a
 // genre — Aladin's API doesn't return one. This lets anyone fill it in after
 // the fact; it only ever sets a genre that's still missing, never overwrites
