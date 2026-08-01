@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { upsertReadingStatusAndReview } from "@/app/actions/books";
 import { getDb } from "@/lib/db";
+import { parseReadingStatus, validateReadingSubmission } from "@/lib/readingStatus";
 import { getCurrentUser } from "@/lib/session";
 
 export type ReviewFormState = { error?: string; success?: boolean };
@@ -20,16 +22,19 @@ export async function upsertReview(
   const content = String(formData.get("content") ?? "").trim();
   const isPublic = formData.get("is_public") ? 1 : 0;
   const isAnonymous = formData.get("is_anonymous") ? 1 : 0;
+  const readingStatus = parseReadingStatus(
+    String(formData.get("reading_status") ?? "").trim()
+  );
 
   if (!Number.isInteger(bookId) || bookId <= 0) {
     return { error: "잘못된 요청입니다." };
   }
-  if (!Number.isFinite(rating) || rating < 0.5 || rating > 5 || !Number.isInteger(rating * 2)) {
-    return { error: "평점은 0.5~5점 사이에서 0.5점 단위로 선택해주세요." };
-  }
-  if (content.length > 4000) {
-    return { error: "감상평은 4000자 이내로 작성해주세요." };
-  }
+  const validationError = validateReadingSubmission(
+    readingStatus,
+    rating,
+    content
+  );
+  if (validationError) return { error: validationError };
 
   const db = await getDb();
   const book = await db.execute({
@@ -40,15 +45,16 @@ export async function upsertReview(
     return { error: "존재하지 않는 책입니다." };
   }
 
-  await db.execute({
-    sql: `INSERT INTO reviews (book_id, user_id, rating, content, is_public, is_anonymous)
-          VALUES (?, ?, ?, ?, ?, ?)
-          ON CONFLICT(book_id, user_id)
-          DO UPDATE SET rating = excluded.rating, content = excluded.content,
-            is_public = excluded.is_public, is_anonymous = excluded.is_anonymous,
-            updated_at = datetime('now')`,
-    args: [bookId, user.id, rating, content || null, isPublic, isAnonymous],
-  });
+  await upsertReadingStatusAndReview(
+    db,
+    user.id,
+    bookId,
+    readingStatus,
+    rating,
+    content,
+    isPublic,
+    isAnonymous
+  );
 
   revalidatePath("/library");
   revalidatePath("/recommend");

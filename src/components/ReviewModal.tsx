@@ -8,9 +8,20 @@ import {
   type ReviewFormState,
 } from "@/app/actions/reviews";
 import { StarPicker } from "@/components/StarRating";
-import type { BookWithStats } from "@/lib/types";
+import type { BookReadingStatus, BookWithStats } from "@/lib/types";
 
 const initialState: ReviewFormState = {};
+
+const READING_STATUS_LABELS: Record<BookReadingStatus, string> = {
+  finished: "다 읽음",
+  reading: "읽는 중",
+  want_to_read: "읽을 예정",
+};
+const READING_STATUS_ORDER: BookReadingStatus[] = [
+  "finished",
+  "reading",
+  "want_to_read",
+];
 
 function draftKey(bookId: number) {
   return `book-log:review-draft:${bookId}`;
@@ -26,6 +37,9 @@ export default function ReviewModal({
   const router = useRouter();
   const [state, action, pending] = useActionState(upsertReview, initialState);
   const [isDeleting, startDelete] = useTransition();
+  const [readingStatus, setReadingStatus] = useState<BookReadingStatus>(
+    book.my_reading_status ?? "finished"
+  );
   // Falls back to a locally-saved draft so an accidental close (or
   // navigating away) doesn't lose what was typed — only cleared once the
   // review actually saves.
@@ -78,6 +92,26 @@ export default function ReviewModal({
         </div>
         <form action={action} className="flex flex-col gap-3">
           <input type="hidden" name="book_id" value={book.id} />
+          <input type="hidden" name="reading_status" value={readingStatus} />
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium">읽기 상태</span>
+            <div className="flex gap-2">
+              {READING_STATUS_ORDER.map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => setReadingStatus(status)}
+                  className={`rounded-md border px-3 py-1.5 text-sm ${
+                    readingStatus === status
+                      ? "border-accent bg-accent text-accent-foreground"
+                      : "border-border hover:bg-background"
+                  }`}
+                >
+                  {READING_STATUS_LABELS[status]}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <span className="mb-1 block text-sm font-medium">평점</span>
             <StarPicker name="rating" defaultValue={book.my_rating ?? 0} />
