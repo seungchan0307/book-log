@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { logOut } from "@/app/actions/auth";
+import SettingsMenu from "@/components/SettingsMenu";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
@@ -86,6 +87,12 @@ export default async function Navbar() {
               </Link>
             </>
           )}
+          <div className="hidden items-center gap-x-3 md:flex sm:gap-x-4">
+            <span className="text-border" aria-hidden="true">
+              /
+            </span>
+            <SettingsMenu />
+          </div>
         </nav>
       </div>
     </header>

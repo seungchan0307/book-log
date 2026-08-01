@@ -13,7 +13,7 @@ export default async function ProfilePage() {
         <h1 className="text-2xl font-bold">프로필</h1>
         <ProfileForm user={user} />
       </div>
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 md:hidden">
         <h2 className="text-lg font-semibold">화면 설정</h2>
         <DisplaySettings />
       </div>
