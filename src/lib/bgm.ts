@@ -1,32 +1,63 @@
-// A small generative ambient piano, synthesized entirely with the Web Audio
-// API — no audio file to fetch or license. Sparse, single-note plucks (with
-// an occasional soft harmony note) picked from a pentatonic scale, each
-// with a piano-like fast-attack/slow-decay envelope, run through a touch of
-// algorithmic reverb for warmth.
+// A tiny rotating "playlist" of calm piano background music, synthesized
+// entirely with the Web Audio API — there's no audio file to fetch, host,
+// or license. This deliberately doesn't attempt to reproduce any real
+// piece: transcribing a specific famous work accurately from memory isn't
+// something I can do reliably (especially a virtuosic one), and getting it
+// wrong would just sound broken. Instead these are a few short original
+// melodic phrases in a calm, classical-piano-inspired style, each looped a
+// few times before the engine moves on to the next.
 const STORAGE_KEY = "book-log:bgm";
 
-// C major pentatonic across three octaves, so any note picked at random
-// stays consonant with whatever came before it.
-const SCALE = {
-  low: [130.81, 146.83, 164.81, 196.0, 220.0], // C3 D3 E3 G3 A3
-  mid: [261.63, 293.66, 329.63, 392.0, 440.0], // C4 D4 E4 G4 A4
-  high: [523.25, 587.33, 659.25, 783.99, 880.0], // C5 D5 E5 G5 A5
-} as const;
+type NoteEvent = { freq: number; duration: number };
 
-const NOTE_MIN_GAP_MS = 1600;
-const NOTE_MAX_GAP_MS = 3000;
+// Each phrase is a short original melody (not a transcription of any real
+// composition), voiced with simple piano-like notes so they read as
+// recognizably "a song" rather than ambient texture.
+const PLAYLIST: readonly NoteEvent[][] = [
+  // Piece 1 — D major, gentle rise and fall.
+  [
+    { freq: 293.66, duration: 1.1 }, // D4
+    { freq: 369.99, duration: 1.1 }, // F#4
+    { freq: 440.0, duration: 1.1 }, // A4
+    { freq: 587.33, duration: 1.3 }, // D5
+    { freq: 554.37, duration: 1.1 }, // C#5
+    { freq: 440.0, duration: 1.1 }, // A4
+    { freq: 369.99, duration: 1.1 }, // F#4
+    { freq: 293.66, duration: 1.9 }, // D4, held
+  ],
+  // Piece 2 — F major, a little more wistful.
+  [
+    { freq: 349.23, duration: 1.1 }, // F4
+    { freq: 440.0, duration: 1.0 }, // A4
+    { freq: 523.25, duration: 1.2 }, // C5
+    { freq: 440.0, duration: 1.0 }, // A4
+    { freq: 466.16, duration: 1.1 }, // Bb4
+    { freq: 392.0, duration: 1.1 }, // G4
+    { freq: 349.23, duration: 1.1 }, // F4
+    { freq: 261.63, duration: 1.9 }, // C4, held
+  ],
+  // Piece 3 — E minor, more contemplative.
+  [
+    { freq: 329.63, duration: 1.1 }, // E4
+    { freq: 392.0, duration: 1.1 }, // G4
+    { freq: 493.88, duration: 1.2 }, // B4
+    { freq: 440.0, duration: 1.0 }, // A4
+    { freq: 392.0, duration: 1.1 }, // G4
+    { freq: 329.63, duration: 1.1 }, // E4
+    { freq: 293.66, duration: 1.1 }, // D4
+    { freq: 329.63, duration: 1.9 }, // E4, held
+  ],
+];
+
+const REPEATS_PER_PIECE = 3;
+const REPEAT_GAP_SECONDS = 1.0;
+const PIECE_GAP_SECONDS = 2.5;
 const NOTE_ATTACK = 0.012;
 const NOTE_DECAY_TIME_CONSTANT = 0.9;
-const TARGET_VOLUME = 0.9;
+const TARGET_VOLUME = 0.85;
 // Toggling should feel instant, not fade out over seconds — a very short
 // ramp still avoids an audible click without reading as a "fade".
 const SNAP_FADE_SECONDS = 0.02;
-
-function pickNoteFrequency(): number {
-  const roll = Math.random();
-  const register = roll < 0.15 ? SCALE.low : roll < 0.85 ? SCALE.mid : SCALE.high;
-  return register[Math.floor(Math.random() * register.length)];
-}
 
 function createReverbImpulse(ctx: AudioContext): AudioBuffer {
   const seconds = 2.2;
@@ -47,6 +78,8 @@ class PianoEngine {
   private noteBus: GainNode | null = null;
   private noteTimer: ReturnType<typeof setTimeout> | null = null;
   private playing = false;
+  private pieceIndex = 0;
+  private repeatCount = 0;
 
   isPlaying() {
     return this.playing;
@@ -78,9 +111,8 @@ class PianoEngine {
     this.noteBus.connect(convolver);
   }
 
-  private playNote(freq: number, velocity: number, startAt: number, delaySeconds = 0) {
+  private playNote(freq: number, velocity: number, startAt: number) {
     const ctx = this.ctx!;
-    const now = startAt + delaySeconds;
 
     const fundamental = ctx.createOscillator();
     fundamental.type = "triangle";
@@ -107,13 +139,17 @@ class PianoEngine {
     filter.connect(this.noteBus!);
 
     const peak = 0.45 * velocity;
-    voiceGain.gain.setValueAtTime(0, now);
-    voiceGain.gain.linearRampToValueAtTime(peak, now + NOTE_ATTACK);
-    voiceGain.gain.setTargetAtTime(0.0001, now + NOTE_ATTACK, NOTE_DECAY_TIME_CONSTANT);
+    voiceGain.gain.setValueAtTime(0, startAt);
+    voiceGain.gain.linearRampToValueAtTime(peak, startAt + NOTE_ATTACK);
+    voiceGain.gain.setTargetAtTime(
+      0.0001,
+      startAt + NOTE_ATTACK,
+      NOTE_DECAY_TIME_CONSTANT
+    );
 
-    const stopAt = now + NOTE_ATTACK + NOTE_DECAY_TIME_CONSTANT * 6;
-    fundamental.start(now);
-    overtone.start(now);
+    const stopAt = startAt + NOTE_ATTACK + NOTE_DECAY_TIME_CONSTANT * 6;
+    fundamental.start(startAt);
+    overtone.start(startAt);
     fundamental.stop(stopAt);
     overtone.stop(stopAt);
     fundamental.onended = () => {
@@ -125,29 +161,27 @@ class PianoEngine {
     };
   }
 
-  private scheduleNextNote() {
-    const delay =
-      NOTE_MIN_GAP_MS + Math.random() * (NOTE_MAX_GAP_MS - NOTE_MIN_GAP_MS);
+  private playPhrase() {
+    const ctx = this.ctx!;
+    const phrase = PLAYLIST[this.pieceIndex];
+    let t = ctx.currentTime + 0.05;
+    for (const note of phrase) {
+      this.playNote(note.freq, 0.75 + Math.random() * 0.2, t);
+      t += note.duration;
+    }
+
+    const totalDuration = phrase.reduce((sum, note) => sum + note.duration, 0);
+    const isLastRepeat = this.repeatCount + 1 >= REPEATS_PER_PIECE;
+    const gap = isLastRepeat ? PIECE_GAP_SECONDS : REPEAT_GAP_SECONDS;
+
     this.noteTimer = setTimeout(() => {
-      if (!this.playing) {
-        this.noteTimer = null;
-        return;
+      this.repeatCount++;
+      if (this.repeatCount >= REPEATS_PER_PIECE) {
+        this.repeatCount = 0;
+        this.pieceIndex = (this.pieceIndex + 1) % PLAYLIST.length;
       }
-      const ctx = this.ctx!;
-      const now = ctx.currentTime;
-      const freq = pickNoteFrequency();
-      const velocity = 0.7 + Math.random() * 0.3;
-      this.playNote(freq, velocity, now);
-
-      // Occasionally add a soft harmony note (a third or fifth above) just
-      // after the first, for a little texture without turning into a chord.
-      if (Math.random() < 0.2) {
-        const harmony = freq * (Math.random() < 0.5 ? 1.25 : 1.5);
-        this.playNote(harmony, velocity * 0.6, now, 0.15);
-      }
-
-      this.scheduleNextNote();
-    }, delay);
+      this.playPhrase();
+    }, (totalDuration + gap) * 1000);
   }
 
   async start() {
@@ -165,7 +199,7 @@ class PianoEngine {
       now + SNAP_FADE_SECONDS
     );
     if (!this.noteTimer) {
-      this.scheduleNextNote();
+      this.playPhrase();
     }
   }
 
