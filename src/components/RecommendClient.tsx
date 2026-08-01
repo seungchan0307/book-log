@@ -91,10 +91,18 @@ export default function RecommendClient({
               onReview={setReviewTarget}
             />
           ) : (
-            <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-              책에 4점 이상의 감상을 남기면, 좋아하는 장르를 바탕으로 맞춤
-              추천을 보여드려요.
-            </p>
+            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border p-6 text-center text-muted">
+              <p>
+                책에 3.5점 이상의 감상을 남기면, 좋아하는 장르를 바탕으로
+                맞춤 추천을 보여드려요.
+              </p>
+              <Link
+                href="/explore"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+              >
+                책 둘러보러 가기
+              </Link>
+            </div>
           )}
         </section>
       ) : (

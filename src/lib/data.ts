@@ -340,7 +340,7 @@ export async function hasFavoriteGenres(userId: number): Promise<boolean> {
     sql: `SELECT 1
           FROM reviews r
           JOIN books b ON b.id = r.book_id
-          WHERE r.user_id = ? AND r.rating >= 4 AND b.genre IS NOT NULL
+          WHERE r.user_id = ? AND r.rating >= 3.5 AND b.genre IS NOT NULL
           LIMIT 1`,
     args: [userId],
   });
@@ -356,7 +356,7 @@ export async function getPersonalizedRecommendations(
     sql: `SELECT DISTINCT b.genre AS genre
           FROM reviews r
           JOIN books b ON b.id = r.book_id
-          WHERE r.user_id = ? AND r.rating >= 4 AND b.genre IS NOT NULL`,
+          WHERE r.user_id = ? AND r.rating >= 3.5 AND b.genre IS NOT NULL`,
     args: [userId],
   });
   const favoriteGenres = rowsToObjects<{ genre: string }>(genreResult);
