@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { logOut } from "@/app/actions/auth";
+import { getUnusedGachaTicketCount } from "@/lib/data";
 import SettingsMenu from "@/components/SettingsMenu";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
+  const ticketCount = user ? await getUnusedGachaTicketCount(user.id) : 0;
 
   return (
     <header className="border-b border-border bg-card">
@@ -19,6 +21,20 @@ export default async function Navbar() {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 sm:gap-4">
             <Link href="/library" className="hover:text-accent">
               나의 서재
+            </Link>
+            <span className="text-border" aria-hidden="true">
+              /
+            </span>
+            <Link
+              href="/bookshelf"
+              className="inline-flex items-center gap-1 hover:text-accent"
+            >
+              책장
+              {ticketCount > 0 && (
+                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[0.65rem] font-bold leading-none text-accent-foreground">
+                  {ticketCount}
+                </span>
+              )}
             </Link>
             <span className="text-border" aria-hidden="true">
               /

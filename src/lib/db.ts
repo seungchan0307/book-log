@@ -126,6 +126,29 @@ async function initSchema(client: Client) {
         updated_at TEXT NOT NULL DEFAULT (datetime('now')),
         PRIMARY KEY (user_id, book_id)
       )`,
+      // Granted once per book the first time it reaches 'finished' (see
+      // upsertReadingStatusAndReview). Sits unused until the user spends it
+      // on /bookshelf, at which point used_at is stamped and a
+      // bookshelf_items row is created from it.
+      `CREATE TABLE IF NOT EXISTS gacha_tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INTEGER REFERENCES books(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        used_at TEXT
+      )`,
+      // One row per gacha pull. id ordering doubles as pull order, which is
+      // exactly the order the 책장 shelf displays items in.
+      `CREATE TABLE IF NOT EXISTS bookshelf_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        book_id INTEGER REFERENCES books(id) ON DELETE SET NULL,
+        item_key TEXT NOT NULL,
+        rarity TEXT NOT NULL CHECK (rarity IN ('common', 'rare', 'epic', 'legendary')),
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_gacha_tickets_user ON gacha_tickets(user_id, used_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_bookshelf_items_user ON bookshelf_items(user_id, id)`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_book_id ON reviews(book_id)`,
       `CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id)`,
       `CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id)`,

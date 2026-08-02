@@ -102,6 +102,16 @@ export type GenreDistributionRow = {
   count: number;
 };
 
+export type BookshelfItem = {
+  id: number;
+  user_id: number;
+  book_id: number | null;
+  item_key: string;
+  rarity: "common" | "rare" | "epic" | "legendary";
+  created_at: string;
+  book_title: string | null;
+};
+
 export type ReadingStatsSummary = {
   totalFinished: number;
   avgRating: number | null;

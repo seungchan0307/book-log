@@ -2,6 +2,7 @@ import { getDb, rowsToObjects } from "@/lib/db";
 import { shiftDateString, todayDateString } from "@/lib/date";
 import type {
   BookOption,
+  BookshelfItem,
   BookWithStats,
   DayStatus,
   GenreDistributionRow,
@@ -591,6 +592,34 @@ export async function getReadingStatsSummary(
       ? { genre: genreRow.genre, avgRating: genreRow.avg_rating }
       : null,
   };
+}
+
+export async function getUnusedGachaTicketCount(
+  userId: number
+): Promise<number> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: "SELECT COUNT(*) AS count FROM gacha_tickets WHERE user_id = ? AND used_at IS NULL",
+    args: [userId],
+  });
+  return rowsToObjects<{ count: number }>(result)[0].count;
+}
+
+// Pull order (id ascending) is the same order the 책장 shelf displays items
+// in, so no separate "sort order" column is needed.
+export async function listMyBookshelfItems(
+  userId: number
+): Promise<BookshelfItem[]> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: `SELECT bi.*, b.title AS book_title
+          FROM bookshelf_items bi
+          LEFT JOIN books b ON b.id = bi.book_id
+          WHERE bi.user_id = ?
+          ORDER BY bi.id ASC`,
+    args: [userId],
+  });
+  return rowsToObjects<BookshelfItem>(result);
 }
 
 export async function getMonthlyGoal(userId: number): Promise<number | null> {

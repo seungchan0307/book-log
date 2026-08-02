@@ -46,6 +46,18 @@ export async function upsertReadingStatusAndReview(
   // finished_at is set once, the first time this book reaches 'finished',
   // and preserved on every later upsert (edits, re-saves, status toggles)
   // so it reflects when the book was actually finished, not last touched.
+  // Read it beforehand so a gacha ticket (see below) is only granted the
+  // same one time finished_at itself would be set, not on every re-save or
+  // status toggle back to 'finished'.
+  const prior = await db.execute({
+    sql: "SELECT finished_at FROM reading_status WHERE user_id = ? AND book_id = ?",
+    args: [userId, bookId],
+  });
+  const priorFinishedAt = (
+    prior.rows[0] as unknown as { finished_at: string | null } | undefined
+  )?.finished_at;
+  const grantsGachaTicket = readingStatus === "finished" && !priorFinishedAt;
+
   await db.execute({
     sql: `INSERT INTO reading_status (user_id, book_id, status, finished_at)
           VALUES (?, ?, ?, CASE WHEN ? = 'finished' THEN datetime('now') ELSE NULL END)
@@ -59,6 +71,14 @@ export async function upsertReadingStatusAndReview(
             END`,
     args: [userId, bookId, readingStatus, readingStatus],
   });
+
+  // Finishing a book earns one gacha pull, spent later on /bookshelf.
+  if (grantsGachaTicket) {
+    await db.execute({
+      sql: "INSERT INTO gacha_tickets (user_id, book_id) VALUES (?, ?)",
+      args: [userId, bookId],
+    });
+  }
 
   // Registering (or re-registering) a book is an explicit "put this back on
   // my shelf" — undo any earlier 서재에서 삭제 for it.

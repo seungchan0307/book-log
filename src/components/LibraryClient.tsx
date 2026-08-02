@@ -32,11 +32,13 @@ export default function LibraryClient({
   myReviews,
   currentMonthCount,
   monthlyGoal,
+  gachaTicketCount,
 }: {
   books: BookWithStats[];
   myReviews: ReviewWithBook[];
   currentMonthCount: number;
   monthlyGoal: number | null;
+  gachaTicketCount: number;
 }) {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
@@ -105,6 +107,20 @@ export default function LibraryClient({
       {!addOpen && (
         <>
           <MonthlyGoalCard currentCount={currentMonthCount} goal={monthlyGoal} />
+
+          <Link
+            href="/bookshelf"
+            className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:border-accent"
+          >
+            <span className="flex items-center gap-2 font-medium">
+              🎁 책장 구경하기
+            </span>
+            <span className="text-sm text-muted">
+              {gachaTicketCount > 0
+                ? `뽑기권 ${gachaTicketCount}장 보유 중`
+                : "책을 다 읽으면 뽑기권을 받아요"}
+            </span>
+          </Link>
 
           <div className="flex flex-wrap gap-2">
             <input

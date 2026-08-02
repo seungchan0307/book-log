@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 import {
   getCurrentMonthReadCount,
   getMonthlyGoal,
+  getUnusedGachaTicketCount,
   listMyBooksWithStats,
   listMyReviews,
 } from "@/lib/data";
@@ -32,6 +33,7 @@ export default async function LibraryPage() {
   const myReviews = await listMyReviews(user.id);
   const currentMonthCount = await getCurrentMonthReadCount(user.id);
   const monthlyGoal = await getMonthlyGoal(user.id);
+  const gachaTicketCount = await getUnusedGachaTicketCount(user.id);
 
   return (
     <LibraryClient
@@ -39,6 +41,7 @@ export default async function LibraryPage() {
       myReviews={myReviews}
       currentMonthCount={currentMonthCount}
       monthlyGoal={monthlyGoal}
+      gachaTicketCount={gachaTicketCount}
     />
   );
 }
