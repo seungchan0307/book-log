@@ -2,13 +2,6 @@ import type { CSSProperties } from "react";
 
 export type Rarity = "common" | "rare" | "epic" | "legendary";
 
-export type GachaItem = {
-  key: string;
-  name: string;
-  rarity: Rarity;
-  emoji: string;
-};
-
 export const RARITY_ORDER: Rarity[] = ["legendary", "epic", "rare", "common"];
 
 export const RARITY_LABELS: Record<Rarity, string> = {
@@ -18,7 +11,18 @@ export const RARITY_LABELS: Record<Rarity, string> = {
   legendary: "레전더리",
 };
 
-// Weighted like a typical gacha: legendary is intentionally rare.
+// Higher number = better. Used to decide whether a duplicate pull upgrades
+// the copy already on the shelf (see pullGacha).
+export const RARITY_RANK: Record<Rarity, number> = {
+  common: 1,
+  rare: 2,
+  epic: 3,
+  legendary: 4,
+};
+
+// Weighted like a typical gacha: legendary is intentionally rare. The prize
+// is always a real book picked at random from the catalog (see pullGacha) —
+// this only decides how fancy that particular copy's edition is.
 const RARITY_WEIGHTS: Record<Rarity, number> = {
   common: 55,
   rare: 30,
@@ -31,52 +35,15 @@ const RARITY_WEIGHTS: Record<Rarity, number> = {
 export const SHELF_ROW_SIZE = 8;
 export const ROW_COST_TOKENS = 20;
 
-export const ITEM_POOL: GachaItem[] = [
-  { key: "bookmark_paper", name: "종이 책갈피", rarity: "common", emoji: "🔖" },
-  { key: "sticky_note", name: "포스트잇 메모", rarity: "common", emoji: "🗒️" },
-  { key: "pencil", name: "몽당연필", rarity: "common", emoji: "✏️" },
-  { key: "tea_bag", name: "홍차 티백", rarity: "common", emoji: "🍵" },
-  { key: "dried_flower", name: "말린 들꽃", rarity: "common", emoji: "🌾" },
-  { key: "candle", name: "작은 양초", rarity: "common", emoji: "🕯️" },
-  { key: "reading_lamp", name: "독서등", rarity: "rare", emoji: "🪔" },
-  { key: "leather_bookmark", name: "가죽 책갈피", rarity: "rare", emoji: "📑" },
-  { key: "fountain_pen", name: "만년필", rarity: "rare", emoji: "🖋️" },
-  { key: "wool_blanket", name: "무릎 담요", rarity: "rare", emoji: "🧣" },
-  { key: "coffee_cup", name: "따뜻한 커피 한 잔", rarity: "rare", emoji: "☕" },
-  { key: "antique_globe", name: "앤티크 지구본", rarity: "epic", emoji: "🌍" },
-  { key: "pocket_watch", name: "회중시계", rarity: "epic", emoji: "⏱️" },
-  { key: "vintage_camera", name: "빈티지 카메라", rarity: "epic", emoji: "📷" },
-  { key: "music_box", name: "오르골", rarity: "epic", emoji: "🎵" },
-  { key: "golden_quill", name: "황금 깃펜", rarity: "legendary", emoji: "🪶" },
-  { key: "first_edition", name: "초판본", rarity: "legendary", emoji: "📜" },
-  { key: "starlight_lantern", name: "별빛 램프", rarity: "legendary", emoji: "🏮" },
-];
-
-const POOL_BY_RARITY: Record<Rarity, GachaItem[]> = {
-  common: ITEM_POOL.filter((i) => i.rarity === "common"),
-  rare: ITEM_POOL.filter((i) => i.rarity === "rare"),
-  epic: ITEM_POOL.filter((i) => i.rarity === "epic"),
-  legendary: ITEM_POOL.filter((i) => i.rarity === "legendary"),
-};
-
-export function rollItem(): GachaItem {
+export function rollRarity(): Rarity {
   const total = Object.values(RARITY_WEIGHTS).reduce((a, b) => a + b, 0);
   let roll = Math.random() * total;
-  let rarity: Rarity = "common";
   for (const r of RARITY_ORDER) {
     const weight = RARITY_WEIGHTS[r];
-    if (roll < weight) {
-      rarity = r;
-      break;
-    }
+    if (roll < weight) return r;
     roll -= weight;
   }
-  const pool = POOL_BY_RARITY[rarity];
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-export function findItem(itemKey: string): GachaItem | undefined {
-  return ITEM_POOL.find((i) => i.key === itemKey);
+  return "common";
 }
 
 // Accent hex per rarity, chosen to read clearly against both the light and
@@ -91,8 +58,8 @@ const RARITY_ACCENTS: Record<Rarity, string> = {
   legendary: "#f59e0b",
 };
 
-// Card chrome escalates with rarity so a legendary pull visibly stands out
-// on the shelf, not just in its label.
+// Reveal-modal card chrome escalates with rarity so a legendary pull
+// visibly stands out, not just in its label.
 export function rarityCardStyle(rarity: Rarity): CSSProperties {
   const accent = RARITY_ACCENTS[rarity];
   if (rarity === "common") {
@@ -113,30 +80,27 @@ export function rarityTextStyle(rarity: Rarity): CSSProperties {
   return { color: RARITY_ACCENTS[rarity] };
 }
 
-// A recessed "cubby" look for items resting on the wooden 책장 grid (see
-// BookshelfClient) — inset shadow instead of a border, since the wood frame
-// itself supplies the dividers between cells.
-export function rarityShelfCellStyle(rarity: Rarity): CSSProperties {
+// Book-spine coloring for the shelf grid — a left-lit vertical gradient so
+// it reads as a spine rather than a flat card. Epic/legendary layer an
+// animated glow (see .spine-epic / .spine-legendary in globals.css) on top
+// of this base color instead of a static shadow.
+export function spineBackgroundStyle(rarity: Rarity): CSSProperties {
   const accent = RARITY_ACCENTS[rarity];
-  const inset = "inset 0 3px 7px rgba(0, 0, 0, 0.25)";
   if (rarity === "common") {
     return {
       background:
-        "linear-gradient(180deg, var(--card), color-mix(in srgb, var(--card) 85%, black 15%))",
-      boxShadow: inset,
+        "linear-gradient(90deg, color-mix(in srgb, var(--card) 80%, black 20%), var(--card))",
     };
   }
-  const glow =
-    rarity === "legendary" ? `0 0 14px color-mix(in srgb, ${accent} 60%, transparent)`
-    : rarity === "epic" ? `0 0 9px color-mix(in srgb, ${accent} 40%, transparent)`
-    : "none";
   return {
-    background: `linear-gradient(180deg, color-mix(in srgb, var(--card) 70%, ${accent} 30%), color-mix(in srgb, var(--card) 55%, ${accent} 45%))`,
-    boxShadow: glow !== "none" ? `${inset}, ${glow}` : inset,
+    background: `linear-gradient(90deg, color-mix(in srgb, var(--card) 55%, ${accent} 45%), color-mix(in srgb, var(--card) 75%, ${accent} 25%))`,
   };
 }
 
-export const EMPTY_SHELF_CELL_STYLE: CSSProperties = {
-  background: "color-mix(in srgb, var(--card) 90%, black 10%)",
-  boxShadow: "inset 0 3px 8px rgba(0, 0, 0, 0.18)",
-};
+// CSS class carrying the rarity's animated effect (empty string for
+// common/rare, which stay static).
+export function raritySpineEffectClass(rarity: Rarity): string {
+  if (rarity === "epic") return "spine-epic";
+  if (rarity === "legendary") return "spine-legendary";
+  return "";
+}

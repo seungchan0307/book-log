@@ -204,7 +204,7 @@ export async function searchBooksForExplore(
 // proper Bookland ISBN (978/979 prefix) or, for manual entries, no ISBN at
 // all — goods use ordinary retail barcodes instead, so this filters those
 // out of curated picks without needing a dedicated "is this a book" field.
-const LOOKS_LIKE_A_BOOK_WHERE = `
+export const LOOKS_LIKE_A_BOOK_WHERE = `
   (b.isbn IS NULL OR b.isbn LIKE '978%' OR b.isbn LIKE '979%')
   AND b.title NOT LIKE '%스티커%'
 `;
@@ -630,7 +630,8 @@ export async function listMyBookshelfItems(
 ): Promise<BookshelfItem[]> {
   const db = await getDb();
   const result = await db.execute({
-    sql: `SELECT bi.*, b.title AS book_title
+    sql: `SELECT bi.*, b.title AS book_title, b.author AS book_author,
+                 b.cover_url AS book_cover_url
           FROM bookshelf_items bi
           LEFT JOIN books b ON b.id = bi.book_id
           WHERE bi.user_id = ?
