@@ -112,3 +112,31 @@ export function rarityCardStyle(rarity: Rarity): CSSProperties {
 export function rarityTextStyle(rarity: Rarity): CSSProperties {
   return { color: RARITY_ACCENTS[rarity] };
 }
+
+// A recessed "cubby" look for items resting on the wooden 책장 grid (see
+// BookshelfClient) — inset shadow instead of a border, since the wood frame
+// itself supplies the dividers between cells.
+export function rarityShelfCellStyle(rarity: Rarity): CSSProperties {
+  const accent = RARITY_ACCENTS[rarity];
+  const inset = "inset 0 3px 7px rgba(0, 0, 0, 0.25)";
+  if (rarity === "common") {
+    return {
+      background:
+        "linear-gradient(180deg, var(--card), color-mix(in srgb, var(--card) 85%, black 15%))",
+      boxShadow: inset,
+    };
+  }
+  const glow =
+    rarity === "legendary" ? `0 0 14px color-mix(in srgb, ${accent} 60%, transparent)`
+    : rarity === "epic" ? `0 0 9px color-mix(in srgb, ${accent} 40%, transparent)`
+    : "none";
+  return {
+    background: `linear-gradient(180deg, color-mix(in srgb, var(--card) 70%, ${accent} 30%), color-mix(in srgb, var(--card) 55%, ${accent} 45%))`,
+    boxShadow: glow !== "none" ? `${inset}, ${glow}` : inset,
+  };
+}
+
+export const EMPTY_SHELF_CELL_STYLE: CSSProperties = {
+  background: "color-mix(in srgb, var(--card) 90%, black 10%)",
+  boxShadow: "inset 0 3px 8px rgba(0, 0, 0, 0.18)",
+};

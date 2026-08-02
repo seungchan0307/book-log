@@ -4,11 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { buyBookshelfRow, pullGacha } from "@/app/actions/gacha";
 import {
+  EMPTY_SHELF_CELL_STYLE,
   RARITY_LABELS,
   ROW_COST_TOKENS,
   SHELF_ROW_SIZE,
   findItem,
   rarityCardStyle,
+  rarityShelfCellStyle,
   rarityTextStyle,
   type GachaItem,
 } from "@/lib/gacha";
@@ -125,48 +127,59 @@ export default function BookshelfClient({
             책갈피 토큰 {bookmarkTokens}개
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8">
-          {Array.from({ length: capacity }).map((_, i) => {
-            const bi = items[i];
-            if (!bi) {
-              return (
-                <div
-                  key={`empty-${i}`}
-                  className="flex aspect-square flex-col items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted"
-                >
-                  빈 칸
-                </div>
-              );
-            }
-            const item = findItem(bi.item_key);
-            if (!item) return null;
-            return (
-              <div
-                key={bi.id}
-                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border p-2 text-center"
-                style={rarityCardStyle(bi.rarity)}
-              >
-                <span className="text-2xl">{item.emoji}</span>
-                <span className="truncate text-xs font-medium">
-                  {item.name}
-                </span>
-                <span
-                  className="text-[0.65rem] font-semibold"
-                  style={rarityTextStyle(bi.rarity)}
-                >
-                  {RARITY_LABELS[bi.rarity]}
-                </span>
-                {bi.book_title && (
-                  <span
-                    className="w-full truncate text-[0.65rem] text-muted"
-                    title={bi.book_title}
+        {/* Wooden 책장 frame: one visual shelf level per purchased row of 8
+            (SHELF_ROW_SIZE), stacked with a plank-like divider between
+            levels so buying a row reads as "adding a shelf", not just
+            growing an abstract grid. */}
+        <div
+          className="flex flex-col gap-3 rounded-2xl p-3 sm:p-4"
+          style={{
+            background: "linear-gradient(180deg, #8b5e34, #6b4423)",
+            boxShadow:
+              "inset 0 2px 6px rgba(0, 0, 0, 0.35), 0 6px 14px rgba(0, 0, 0, 0.2)",
+          }}
+        >
+          {Array.from({ length: bookshelfRows }).map((_, rowIndex) => (
+            <div
+              key={rowIndex}
+              className="grid grid-cols-4 gap-2 rounded-lg p-2"
+              style={{ background: "rgba(0, 0, 0, 0.12)" }}
+            >
+              {Array.from({ length: SHELF_ROW_SIZE }).map((_, colIndex) => {
+                const bi = items[rowIndex * SHELF_ROW_SIZE + colIndex];
+                if (!bi) {
+                  return (
+                    <div
+                      key={`empty-${rowIndex}-${colIndex}`}
+                      className="flex aspect-square items-center justify-center rounded-md"
+                      style={EMPTY_SHELF_CELL_STYLE}
+                    />
+                  );
+                }
+                const item = findItem(bi.item_key);
+                if (!item) return null;
+                return (
+                  <div
+                    key={bi.id}
+                    className="flex aspect-square flex-col items-center justify-center gap-0.5 rounded-md p-1 text-center"
+                    style={rarityShelfCellStyle(bi.rarity)}
+                    title={bi.book_title ?? undefined}
                   >
-                    {bi.book_title}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+                    <span className="text-xl sm:text-2xl">{item.emoji}</span>
+                    <span className="w-full truncate text-[0.6rem] font-medium sm:text-xs">
+                      {item.name}
+                    </span>
+                    <span
+                      className="text-[0.55rem] font-semibold sm:text-[0.65rem]"
+                      style={rarityTextStyle(bi.rarity)}
+                    >
+                      {RARITY_LABELS[bi.rarity]}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border p-4">
