@@ -204,6 +204,24 @@ async function initSchema(client: Client) {
     // column already exists
   }
 
+  // Migration guard: bookmark_tokens (책갈피 토큰, earned via daily 독서
+  // 캘린더 check-ins) and bookshelf_rows (rows of 8 slots purchased with
+  // those tokens) were added after the users table already existed.
+  try {
+    await client.execute(
+      "ALTER TABLE users ADD COLUMN bookmark_tokens INTEGER NOT NULL DEFAULT 0"
+    );
+  } catch {
+    // column already exists
+  }
+  try {
+    await client.execute(
+      "ALTER TABLE users ADD COLUMN bookshelf_rows INTEGER NOT NULL DEFAULT 1"
+    );
+  } catch {
+    // column already exists
+  }
+
   // Migration guard: finished_at was added after reading_status already
   // existed in production. Set once, the first time a book reaches
   // 'finished', and never overwritten afterward — unlike updated_at, which

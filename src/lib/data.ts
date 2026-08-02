@@ -594,6 +594,24 @@ export async function getReadingStatsSummary(
   };
 }
 
+export async function getBookshelfMeta(
+  userId: number
+): Promise<{ bookmarkTokens: number; bookshelfRows: number }> {
+  const db = await getDb();
+  const result = await db.execute({
+    sql: "SELECT bookmark_tokens, bookshelf_rows FROM users WHERE id = ?",
+    args: [userId],
+  });
+  const row = rowsToObjects<{
+    bookmark_tokens: number;
+    bookshelf_rows: number;
+  }>(result)[0];
+  return {
+    bookmarkTokens: row?.bookmark_tokens ?? 0,
+    bookshelfRows: row?.bookshelf_rows ?? 1,
+  };
+}
+
 export async function getUnusedGachaTicketCount(
   userId: number
 ): Promise<number> {

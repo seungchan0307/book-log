@@ -14,6 +14,7 @@ export type CheckinResult =
       status: ReadingLogStatus;
       streak: number;
       totalDaysRead: number;
+      bookmarkTokensEarned: number;
     };
 
 export async function submitReadingCheckin(
@@ -66,13 +67,27 @@ export async function submitReadingCheckin(
     ],
   });
 
+  // 책갈피 토큰: one per check-in (읽음 or 읽지 않음 both count as showing
+  // up), bumped to two once the read-streak this check-in extends reaches 3+
+  // — reuses the same streak the 연속 읽는 중 banner already shows, rather
+  // than tracking a second "visit streak" concept.
+  const streak = await getCurrentStreak(user.id);
+  const bookmarkTokensEarned = streak >= 3 ? 2 : 1;
+  await db.execute({
+    sql: "UPDATE users SET bookmark_tokens = bookmark_tokens + ? WHERE id = ?",
+    args: [bookmarkTokensEarned, user.id],
+  });
+
   revalidatePath("/");
   revalidatePath("/calendar");
+  revalidatePath("/bookshelf");
+  revalidatePath("/library");
 
   return {
     success: true,
     status,
-    streak: await getCurrentStreak(user.id),
+    streak,
     totalDaysRead: await getTotalReadDays(user.id),
+    bookmarkTokensEarned,
   };
 }

@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { submitReadingCheckin } from "@/app/actions/reading";
 import ReadingStatusCard from "@/components/ReadingStatusCard";
 import MonthCalendar from "@/components/MonthCalendar";
@@ -17,7 +16,6 @@ export default function ReadingCheckinForm({
   monthDays: DayStatus[];
   today: string;
 }) {
-  const router = useRouter();
   const [step, setStep] = useState<"ask" | "book">("ask");
   const [bookId, setBookId] = useState("");
   const [customTitle, setCustomTitle] = useState("");
@@ -26,6 +24,7 @@ export default function ReadingCheckinForm({
     status: ReadingLogStatus;
     streak: number;
     totalDaysRead: number;
+    bookmarkTokensEarned: number;
   } | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -45,8 +44,14 @@ export default function ReadingCheckinForm({
         status: result.status,
         streak: result.streak,
         totalDaysRead: result.totalDaysRead,
+        bookmarkTokensEarned: result.bookmarkTokensEarned,
       });
-      router.refresh();
+      // No router.refresh() here: this page's own display is already fully
+      // covered by local state (including updatedDays below), and a refresh
+      // would swap this client-rendered "done" branch for the server one the
+      // moment it lands — wiping the 토큰 획득 banner before it's seen,
+      // since page.tsx renders the same ReadingStatusCard once todayLog
+      // exists but without bookmarkTokensEarned.
     });
   }
 
@@ -61,6 +66,7 @@ export default function ReadingCheckinForm({
         totalDaysRead={done.totalDaysRead}
         monthDays={updatedDays}
         today={today}
+        bookmarkTokensEarned={done.bookmarkTokensEarned}
       />
     );
   }

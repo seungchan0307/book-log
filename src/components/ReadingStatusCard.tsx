@@ -7,15 +7,25 @@ export default function ReadingStatusCard({
   totalDaysRead,
   monthDays,
   today,
+  bookmarkTokensEarned,
 }: {
   status: ReadingLogStatus;
   streak: number;
   totalDaysRead: number;
   monthDays: DayStatus[];
   today: string;
+  // Only set right after a check-in is submitted (see ReadingCheckinForm) —
+  // the server-rendered "already checked in today" path omits it so this
+  // banner doesn't show on every later visit to the same day.
+  bookmarkTokensEarned?: number;
 }) {
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-5 rounded-lg border border-border bg-card p-6">
+      {bookmarkTokensEarned !== undefined && (
+        <p className="text-sm font-medium text-accent">
+          🔖 책갈피 토큰 {bookmarkTokensEarned}개 획득!
+        </p>
+      )}
       {status === "read" ? (
         <div className="flex flex-col items-center gap-1">
           {streak >= 2 && (

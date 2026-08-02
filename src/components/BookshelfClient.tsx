@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { pullGacha } from "@/app/actions/gacha";
+import { buyBookshelfRow, pullGacha } from "@/app/actions/gacha";
 import {
   RARITY_LABELS,
+  ROW_COST_TOKENS,
+  SHELF_ROW_SIZE,
   findItem,
   rarityCardStyle,
   rarityTextStyle,
@@ -17,18 +19,27 @@ type Phase = "idle" | "opening" | "revealed";
 export default function BookshelfClient({
   ticketCount,
   items,
+  bookmarkTokens,
+  bookshelfRows,
 }: {
   ticketCount: number;
   items: BookshelfItem[];
+  bookmarkTokens: number;
+  bookshelfRows: number;
 }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [revealed, setRevealed] = useState<GachaItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [buyError, setBuyError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isBuying, startBuy] = useTransition();
+
+  const capacity = bookshelfRows * SHELF_ROW_SIZE;
+  const isFull = items.length >= capacity;
 
   function handlePull() {
-    if (phase !== "idle" || ticketCount <= 0) return;
+    if (phase !== "idle" || ticketCount <= 0 || isFull) return;
     setError(null);
     setPhase("opening");
     startTransition(async () => {
@@ -53,6 +64,18 @@ export default function BookshelfClient({
     router.refresh();
   }
 
+  function handleBuyRow() {
+    setBuyError(null);
+    startBuy(async () => {
+      const result = await buyBookshelfRow();
+      if ("error" in result) {
+        setBuyError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  }
+
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-8">
       <div className="flex flex-col gap-2">
@@ -75,12 +98,17 @@ export default function BookshelfClient({
         <button
           type="button"
           onClick={handlePull}
-          disabled={ticketCount <= 0 || phase !== "idle" || isPending}
+          disabled={ticketCount <= 0 || phase !== "idle" || isPending || isFull}
           className="rounded-md bg-accent px-6 py-2.5 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
         >
           {phase === "opening" ? "뽑는 중..." : "뽑기"}
         </button>
-        {ticketCount <= 0 && phase === "idle" && (
+        {isFull && (
+          <span className="text-xs text-muted">
+            책장이 가득 찼어요. 아래에서 책갈피 토큰으로 칸을 늘려보세요.
+          </span>
+        )}
+        {!isFull && ticketCount <= 0 && phase === "idle" && (
           <span className="text-xs text-muted">
             책을 다 읽으면 뽑기권을 받을 수 있어요.
           </span>
@@ -89,43 +117,75 @@ export default function BookshelfClient({
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="text-lg font-semibold">모은 아이템 ({items.length})</h2>
-        {items.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-8 text-center text-muted">
-            아직 뽑은 아이템이 없어요. 책을 읽고 첫 아이템을 뽑아보세요!
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {items.map((bi) => {
-              const item = findItem(bi.item_key);
-              if (!item) return null;
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold">
+            모은 아이템 ({items.length}/{capacity})
+          </h2>
+          <span className="text-sm text-muted">
+            책갈피 토큰 {bookmarkTokens}개
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-8">
+          {Array.from({ length: capacity }).map((_, i) => {
+            const bi = items[i];
+            if (!bi) {
               return (
                 <div
-                  key={bi.id}
-                  className="flex flex-col items-center gap-1 rounded-lg border p-4 text-center"
-                  style={rarityCardStyle(bi.rarity)}
+                  key={`empty-${i}`}
+                  className="flex aspect-square flex-col items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted"
                 >
-                  <span className="text-3xl">{item.emoji}</span>
-                  <span className="text-sm font-medium">{item.name}</span>
-                  <span
-                    className="text-xs font-semibold"
-                    style={rarityTextStyle(bi.rarity)}
-                  >
-                    {RARITY_LABELS[bi.rarity]}
-                  </span>
-                  {bi.book_title && (
-                    <span
-                      className="truncate text-xs text-muted"
-                      title={bi.book_title}
-                    >
-                      {bi.book_title}
-                    </span>
-                  )}
+                  빈 칸
                 </div>
               );
-            })}
+            }
+            const item = findItem(bi.item_key);
+            if (!item) return null;
+            return (
+              <div
+                key={bi.id}
+                className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border p-2 text-center"
+                style={rarityCardStyle(bi.rarity)}
+              >
+                <span className="text-2xl">{item.emoji}</span>
+                <span className="truncate text-xs font-medium">
+                  {item.name}
+                </span>
+                <span
+                  className="text-[0.65rem] font-semibold"
+                  style={rarityTextStyle(bi.rarity)}
+                >
+                  {RARITY_LABELS[bi.rarity]}
+                </span>
+                {bi.book_title && (
+                  <span
+                    className="w-full truncate text-[0.65rem] text-muted"
+                    title={bi.book_title}
+                  >
+                    {bi.book_title}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-border p-4">
+          <span className="text-sm text-muted">
+            책갈피 토큰 {ROW_COST_TOKENS}개로 8칸짜리 줄을 하나 더 늘릴 수
+            있어요.
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleBuyRow}
+              disabled={isBuying || bookmarkTokens < ROW_COST_TOKENS}
+              className="rounded-md border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isBuying ? "늘리는 중..." : `줄 추가 (${ROW_COST_TOKENS}개)`}
+            </button>
           </div>
-        )}
+        </div>
+        {buyError && <span className="text-sm text-red-600">{buyError}</span>}
       </div>
 
       {phase === "revealed" && revealed && (

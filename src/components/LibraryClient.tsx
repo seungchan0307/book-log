@@ -33,12 +33,14 @@ export default function LibraryClient({
   currentMonthCount,
   monthlyGoal,
   gachaTicketCount,
+  bookmarkTokens,
 }: {
   books: BookWithStats[];
   myReviews: ReviewWithBook[];
   currentMonthCount: number;
   monthlyGoal: number | null;
   gachaTicketCount: number;
+  bookmarkTokens: number;
 }) {
   const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
@@ -116,9 +118,7 @@ export default function LibraryClient({
               🎁 책장 구경하기
             </span>
             <span className="text-sm text-muted">
-              {gachaTicketCount > 0
-                ? `뽑기권 ${gachaTicketCount}장 보유 중`
-                : "책을 다 읽으면 뽑기권을 받아요"}
+              뽑기권 {gachaTicketCount}장 · 책갈피 토큰 {bookmarkTokens}개
             </span>
           </Link>
 

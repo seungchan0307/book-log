@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import {
+  getBookshelfMeta,
   getCurrentMonthReadCount,
   getMonthlyGoal,
   getUnusedGachaTicketCount,
@@ -34,6 +35,7 @@ export default async function LibraryPage() {
   const currentMonthCount = await getCurrentMonthReadCount(user.id);
   const monthlyGoal = await getMonthlyGoal(user.id);
   const gachaTicketCount = await getUnusedGachaTicketCount(user.id);
+  const { bookmarkTokens } = await getBookshelfMeta(user.id);
 
   return (
     <LibraryClient
@@ -42,6 +44,7 @@ export default async function LibraryPage() {
       currentMonthCount={currentMonthCount}
       monthlyGoal={monthlyGoal}
       gachaTicketCount={gachaTicketCount}
+      bookmarkTokens={bookmarkTokens}
     />
   );
 }

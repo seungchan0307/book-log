@@ -20,11 +20,16 @@ export const RARITY_LABELS: Record<Rarity, string> = {
 
 // Weighted like a typical gacha: legendary is intentionally rare.
 const RARITY_WEIGHTS: Record<Rarity, number> = {
-  common: 58,
+  common: 55,
   rare: 30,
   epic: 10,
-  legendary: 2,
+  legendary: 5,
 };
+
+// A 책장 shelf starts with one row and grows by spending 책갈피 토큰
+// (earned via daily 독서 캘린더 check-ins, see submitReadingCheckin).
+export const SHELF_ROW_SIZE = 8;
+export const ROW_COST_TOKENS = 20;
 
 export const ITEM_POOL: GachaItem[] = [
   { key: "bookmark_paper", name: "종이 책갈피", rarity: "common", emoji: "🔖" },

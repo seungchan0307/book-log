@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
-import { getUnusedGachaTicketCount, listMyBookshelfItems } from "@/lib/data";
+import {
+  getBookshelfMeta,
+  getUnusedGachaTicketCount,
+  listMyBookshelfItems,
+} from "@/lib/data";
 import BookshelfClient from "@/components/BookshelfClient";
 
 export default async function BookshelfPage() {
@@ -23,10 +27,19 @@ export default async function BookshelfPage() {
     );
   }
 
-  const [ticketCount, items] = await Promise.all([
-    getUnusedGachaTicketCount(user.id),
-    listMyBookshelfItems(user.id),
-  ]);
+  const [ticketCount, items, { bookmarkTokens, bookshelfRows }] =
+    await Promise.all([
+      getUnusedGachaTicketCount(user.id),
+      listMyBookshelfItems(user.id),
+      getBookshelfMeta(user.id),
+    ]);
 
-  return <BookshelfClient ticketCount={ticketCount} items={items} />;
+  return (
+    <BookshelfClient
+      ticketCount={ticketCount}
+      items={items}
+      bookmarkTokens={bookmarkTokens}
+      bookshelfRows={bookshelfRows}
+    />
+  );
 }
