@@ -104,3 +104,12 @@ export function raritySpineEffectClass(rarity: Rarity): string {
   if (rarity === "legendary") return "spine-legendary";
   return "";
 }
+
+// The small rarity gem stamped on each spine — spines carry no text, so
+// this (plus the base color) is the only rarity tell at a glance.
+export function rarityGemStyle(rarity: Rarity): CSSProperties {
+  return {
+    background: RARITY_ACCENTS[rarity],
+    boxShadow: "0 0 4px rgba(0, 0, 0, 0.5)",
+  };
+}

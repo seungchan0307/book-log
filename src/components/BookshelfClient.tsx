@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { buyBookshelfRow, pullGacha, type PullGachaResult } from "@/app/actions/gacha";
 import {
@@ -10,6 +11,7 @@ import {
   SHELF_ROW_SIZE,
   raritySpineEffectClass,
   rarityCardStyle,
+  rarityGemStyle,
   rarityTextStyle,
   spineBackgroundStyle,
 } from "@/lib/gacha";
@@ -18,10 +20,78 @@ import type { BookshelfItem } from "@/lib/types";
 type Phase = "idle" | "opening" | "revealed";
 type RevealedPull = Extract<PullGachaResult, { book: unknown }>;
 
-// Spine widths cycle through a fixed pattern instead of random-per-render,
-// so the shelf doesn't reflow every time React re-renders it — real books
-// aren't all the same thickness, but they don't resize themselves either.
-const SPINE_WIDTHS = [34, 42, 30, 46, 36, 32, 44, 38];
+// Every spine is the same thickness — real bookshelves don't resize books
+// to fit, and neither does this one.
+const SPINE_WIDTH = 38;
+
+function BookSpine({
+  item,
+  onClick,
+}: {
+  item: BookshelfItem;
+  onClick: () => void;
+}) {
+  const title = item.book_title ?? item.item_key;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={item.book_author ? `${title} · ${item.book_author}` : title}
+      aria-label={title}
+      className={`relative h-32 shrink-0 overflow-hidden rounded-t-sm transition-transform hover:-translate-y-1 ${raritySpineEffectClass(item.rarity)}`}
+      style={{ width: SPINE_WIDTH, ...spineBackgroundStyle(item.rarity) }}
+    >
+      <span
+        className="pointer-events-none absolute inset-y-0 left-0 w-1/3"
+        style={{
+          background: "linear-gradient(90deg, rgba(255,255,255,0.35), transparent)",
+        }}
+      />
+      <span
+        className="pointer-events-none absolute inset-x-1 top-3 h-[2px] rounded-full"
+        style={{ background: "rgba(0,0,0,0.25)" }}
+      />
+      <span
+        className="pointer-events-none absolute inset-x-1 bottom-3 h-[2px] rounded-full"
+        style={{ background: "rgba(0,0,0,0.25)" }}
+      />
+      <span
+        className="absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={rarityGemStyle(item.rarity)}
+      />
+    </button>
+  );
+}
+
+function BookCoverBlock({
+  title,
+  author,
+  coverUrl,
+}: {
+  title: string;
+  author: string | null;
+  coverUrl: string | null;
+}) {
+  return (
+    <>
+      {coverUrl ? (
+        <div className="relative h-32 w-20 overflow-hidden rounded shadow-md">
+          <Image
+            src={coverUrl}
+            alt={title}
+            fill
+            sizes="80px"
+            className="object-cover"
+          />
+        </div>
+      ) : (
+        <span className="text-6xl">📖</span>
+      )}
+      <span className="text-lg font-bold">{title}</span>
+      {author && <span className="text-sm text-muted">{author}</span>}
+    </>
+  );
+}
 
 export default function BookshelfClient({
   ticketCount,
@@ -37,6 +107,7 @@ export default function BookshelfClient({
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
   const [revealed, setRevealed] = useState<RevealedPull | null>(null);
+  const [selected, setSelected] = useState<BookshelfItem | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [buyError, setBuyError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -90,7 +161,7 @@ export default function BookshelfClient({
           책을 다 읽을 때마다 뽑기권을 하나 받아요. 어떤 책이 나올지는
           완전히 무작위이고, 등급은 일반 → 희귀 → 에픽 → 레전더리 순으로
           점점 화려해져요. 이미 있는 책이 다시 나오면 더 높은 등급일 때만
-          업그레이드돼요.
+          업그레이드돼요. 책장의 책을 누르면 무슨 책인지 볼 수 있어요.
         </p>
       </div>
 
@@ -144,45 +215,24 @@ export default function BookshelfClient({
               <div className="flex min-h-[8.5rem] items-end justify-center gap-[3px] overflow-hidden px-1">
                 {Array.from({ length: SHELF_ROW_SIZE }).map((_, colIndex) => {
                   const bi = items[rowIndex * SHELF_ROW_SIZE + colIndex];
-                  const width = SPINE_WIDTHS[colIndex % SPINE_WIDTHS.length];
                   if (!bi) {
                     return (
                       <div
                         key={`empty-${rowIndex}-${colIndex}`}
-                        className="h-16 shrink-0 rounded-t-sm border border-dashed"
+                        className="h-32 shrink-0 rounded-t-sm border border-dashed"
                         style={{
-                          width,
-                          borderColor: "rgba(255, 255, 255, 0.25)",
+                          width: SPINE_WIDTH,
+                          borderColor: "rgba(255, 255, 255, 0.22)",
                         }}
                       />
                     );
                   }
-                  const title = bi.book_title ?? bi.item_key;
                   return (
-                    <div
+                    <BookSpine
                       key={bi.id}
-                      className={`flex h-32 shrink-0 flex-col items-center justify-between rounded-t-sm py-2 ${raritySpineEffectClass(bi.rarity)}`}
-                      style={{ width, ...spineBackgroundStyle(bi.rarity) }}
-                      title={
-                        bi.book_author ? `${title} · ${bi.book_author}` : title
-                      }
-                    >
-                      <span
-                        className="text-[0.55rem] font-bold"
-                        style={rarityTextStyle(bi.rarity)}
-                      >
-                        {RARITY_LABELS[bi.rarity]}
-                      </span>
-                      <span
-                        className="max-h-full overflow-hidden text-[0.65rem] font-medium leading-tight"
-                        style={{
-                          writingMode: "vertical-rl",
-                          textOrientation: "mixed",
-                        }}
-                      >
-                        {title}
-                      </span>
-                    </div>
+                      item={bi}
+                      onClick={() => setSelected(bi)}
+                    />
                   );
                 })}
               </div>
@@ -228,23 +278,11 @@ export default function BookshelfClient({
             >
               {RARITY_LABELS[revealed.rarity]}
             </span>
-            {revealed.book.cover_url ? (
-              <div className="relative h-32 w-20 overflow-hidden rounded shadow-md">
-                <Image
-                  src={revealed.book.cover_url}
-                  alt={revealed.book.title}
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
-              </div>
-            ) : (
-              <span className="text-6xl">📖</span>
-            )}
-            <span className="text-lg font-bold">{revealed.book.title}</span>
-            {revealed.book.author && (
-              <span className="text-sm text-muted">{revealed.book.author}</span>
-            )}
+            <BookCoverBlock
+              title={revealed.book.title}
+              author={revealed.book.author}
+              coverUrl={revealed.book.cover_url}
+            />
             {revealed.duplicate && (
               <span className="text-sm text-muted">
                 {revealed.upgraded
@@ -259,6 +297,48 @@ export default function BookshelfClient({
             >
               책장에 담기
             </button>
+          </div>
+        </div>
+      )}
+
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className={`flex w-full max-w-xs flex-col items-center gap-3 rounded-xl border p-8 text-center ${raritySpineEffectClass(selected.rarity)}`}
+            style={rarityCardStyle(selected.rarity)}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span
+              className="text-xs font-semibold uppercase tracking-wide"
+              style={rarityTextStyle(selected.rarity)}
+            >
+              {RARITY_LABELS[selected.rarity]}
+            </span>
+            <BookCoverBlock
+              title={selected.book_title ?? selected.item_key}
+              author={selected.book_author}
+              coverUrl={selected.book_cover_url}
+            />
+            <div className="mt-2 flex gap-2">
+              {selected.book_id && (
+                <Link
+                  href={`/books/${selected.book_id}`}
+                  className="rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-background"
+                >
+                  책 상세보기
+                </Link>
+              )}
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}
