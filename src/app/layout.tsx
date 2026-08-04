@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   keywords: ["책갈피", "독서 기록", "독서 앱", "독서 다이어리", "책 추천", "독서 커뮤니티", "책 리뷰"],
   robots: { index: true, follow: true },
+  verification: {
+    google: "vVrPsUtt_pxSo6EI4lDolqmj0fTzO-otkavchodBSAw",
+  },
   openGraph: {
     type: "website",
     locale: "ko_KR",
