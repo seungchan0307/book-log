@@ -48,3 +48,6 @@ next-env.d.ts
 
 # design reference screenshots (not part of the app)
 /design-refs/
+
+# design-taste-frontend skill working files (screenshots, direction sheet)
+/.taste-skill/

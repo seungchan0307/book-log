@@ -2,9 +2,9 @@ import type { ReadingStatsSummary } from "@/lib/types";
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4">
+    <div className="flex flex-1 flex-col gap-1 px-4 py-3 first:pl-0">
       <span className="text-xs text-muted">{label}</span>
-      <span className="truncate text-2xl font-bold">{value}</span>
+      <span className="num truncate text-2xl font-semibold">{value}</span>
     </div>
   );
 }
@@ -15,7 +15,7 @@ export default function StatSummary({
   summary: ReadingStatsSummary;
 }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="flex divide-x divide-border rounded-lg border border-border bg-card px-4">
       <Tile label="누적 읽은 책" value={`${summary.totalFinished}권`} />
       <Tile
         label="평균 별점"

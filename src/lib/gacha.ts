@@ -51,11 +51,13 @@ export function rollRarity(): Rarity {
 // dark-mode overrides — every derived style below mixes these with the
 // theme's own CSS variables via color-mix(), so they track data-theme
 // automatically instead of duplicating the site's light/dark rules.
+// Purple/gold are the universal gacha-rarity convention (epic/legendary
+// across every loot game), not the site's brand accent.
 const RARITY_ACCENTS: Record<Rarity, string> = {
   common: "var(--muted)",
   rare: "#0ea5e9",
-  epic: "#a855f7",
-  legendary: "#f59e0b",
+  epic: "#a855f7", // taste-skill-ignore: gacha rarity convention, not the brand accent
+  legendary: "#f59e0b", // taste-skill-ignore: gacha rarity convention, not the brand accent
 };
 
 // Reveal-modal card chrome escalates with rarity so a legendary pull
@@ -88,12 +90,11 @@ export function spineBackgroundStyle(rarity: Rarity): CSSProperties {
   const accent = RARITY_ACCENTS[rarity];
   if (rarity === "common") {
     return {
-      background:
-        "linear-gradient(90deg, color-mix(in srgb, var(--card) 80%, black 20%), var(--card))",
+      background: "linear-gradient(90deg, color-mix(in srgb, var(--card) 80%, black 20%), var(--card))", // taste-skill-ignore: draws a lit book spine, not UI chrome
     };
   }
   return {
-    background: `linear-gradient(90deg, color-mix(in srgb, var(--card) 55%, ${accent} 45%), color-mix(in srgb, var(--card) 75%, ${accent} 25%))`,
+    background: `linear-gradient(90deg, color-mix(in srgb, var(--card) 55%, ${accent} 45%), color-mix(in srgb, var(--card) 75%, ${accent} 25%))`, // taste-skill-ignore: draws a lit book spine, not UI chrome
   };
 }
 

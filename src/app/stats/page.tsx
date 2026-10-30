@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import {
   getGenreDistribution,
   getMonthlyReadingCounts,
   getReadingStatsSummary,
 } from "@/lib/data";
+import AuthGate from "@/components/AuthGate";
 import GenreDistributionChart from "@/components/GenreDistributionChart";
 import MonthlyReadingChart from "@/components/MonthlyReadingChart";
 import StatSummary from "@/components/StatSummary";
@@ -14,18 +14,10 @@ export default async function StatsPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold">통계</h1>
-        <p className="text-muted">
-          로그인하면 월별 독서량과 장르 분포를 확인할 수 있어요.
-        </p>
-        <Link
-          href="/login"
-          className="rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground hover:opacity-90"
-        >
-          로그인
-        </Link>
-      </div>
+      <AuthGate
+        title="통계"
+        description="로그인하면 월별 독서량과 장르 분포를 확인할 수 있어요."
+      />
     );
   }
 
@@ -47,11 +39,9 @@ export default async function StatsPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">월별 독서량</h2>
         {monthlyCounts.every((m) => m.count === 0) ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-            아직 다 읽은 책이 없어요.
-          </p>
+          <p className="empty">아직 다 읽은 책이 없어요.</p>
         ) : (
-          <div className="rounded-lg border border-border bg-card p-4">
+          <div className="panel">
             <MonthlyReadingChart data={monthlyCounts} />
           </div>
         )}
@@ -60,11 +50,9 @@ export default async function StatsPage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-bold">장르 분포</h2>
         {genreDistribution.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-            아직 남긴 감상이 없어요.
-          </p>
+          <p className="empty">아직 남긴 감상이 없어요.</p>
         ) : (
-          <div className="rounded-lg border border-border bg-card p-4">
+          <div className="panel">
             <GenreDistributionChart distribution={genreDistribution} />
           </div>
         )}

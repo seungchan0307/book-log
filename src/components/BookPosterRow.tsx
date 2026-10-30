@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import type { BookWithStats } from "@/lib/types";
 
 // A horizontally-scrolling, cover-forward row — meant to read as a curated
@@ -17,11 +18,7 @@ export default function BookPosterRow({
   onBookClick?: (book: BookWithStats) => void;
 }) {
   if (books.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-        {emptyMessage}
-      </p>
-    );
+    return <p className="empty">{emptyMessage}</p>;
   }
   return (
     <div className="flex gap-3 overflow-x-auto pb-2">
@@ -32,7 +29,7 @@ export default function BookPosterRow({
           onClick={() => onBookClick?.(book)}
           className="flex w-32 shrink-0 flex-col gap-1.5"
         >
-          <div className="relative flex h-44 w-32 items-center justify-center overflow-hidden rounded-lg bg-card text-3xl text-muted shadow-sm">
+          <div className="relative flex h-44 w-32 items-center justify-center overflow-hidden rounded-lg border border-border bg-card text-3xl text-muted">
             {book.cover_url ? (
               <Image
                 src={book.cover_url}
@@ -42,7 +39,7 @@ export default function BookPosterRow({
                 className="object-cover"
               />
             ) : (
-              "📖"
+              <BookPlaceholder className="h-10 w-10" />
             )}
           </div>
           <p className="line-clamp-2 text-sm font-medium leading-snug">

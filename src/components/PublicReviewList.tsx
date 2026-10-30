@@ -32,7 +32,7 @@ export default function PublicReviewList({
 
   if (reviews.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
+      <p className="empty">
         아직 공개된 감상평이 없어요. 이 책을 읽었다면 감상을 가장 먼저
         남겨보세요.
       </p>
@@ -45,32 +45,21 @@ export default function PublicReviewList({
         <button
           type="button"
           onClick={() => setSort("latest")}
-          className={`rounded-md border px-3 py-1 ${
-            sort === "latest"
-              ? "border-accent bg-accent text-accent-foreground"
-              : "border-border hover:bg-card"
-          }`}
+          className={`segmented-btn ${sort === "latest" ? "segmented-btn-on" : "segmented-btn-off"}`}
         >
           최신순
         </button>
         <button
           type="button"
           onClick={() => setSort("popular")}
-          className={`rounded-md border px-3 py-1 ${
-            sort === "popular"
-              ? "border-accent bg-accent text-accent-foreground"
-              : "border-border hover:bg-card"
-          }`}
+          className={`segmented-btn ${sort === "popular" ? "segmented-btn-on" : "segmented-btn-off"}`}
         >
           인기순
         </button>
       </div>
-      <ul className="flex flex-col gap-3">
+      <ul className="panel flex flex-col">
         {sorted.map((r) => (
-          <li
-            key={r.id}
-            className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4"
-          >
+          <li key={r.id} className="feed-row flex flex-col gap-1">
             <div className="flex items-center justify-between">
               <span className="font-medium">{r.reviewer_nickname}</span>
               <StarDisplay rating={r.rating} />

@@ -12,7 +12,7 @@ export default async function Home() {
   const quote = QUOTES[Math.floor(Math.random() * QUOTES.length)];
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 px-4 pb-24 pt-[4.5cm] text-center">
+    <div className="mx-auto flex min-h-[calc(100svh-57px)] max-w-3xl flex-col items-center justify-center gap-6 px-4 py-12 text-center">
       <h1 className="text-5xl font-bold tracking-tight">
         읽은 책을, <span className="text-accent">기록</span>하고{" "}
         <span className="text-accent">나누다</span>

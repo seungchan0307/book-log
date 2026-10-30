@@ -87,7 +87,9 @@ export default function ReviewModal({
             className="text-muted hover:text-foreground"
             aria-label="닫기"
           >
-            ✕
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M5 5l10 10M15 5 5 15" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
         <form action={action} className="flex flex-col gap-3">
@@ -101,10 +103,8 @@ export default function ReviewModal({
                   key={status}
                   type="button"
                   onClick={() => setReadingStatus(status)}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${
-                    readingStatus === status
-                      ? "border-accent bg-accent text-accent-foreground"
-                      : "border-border hover:bg-background"
+                  className={`segmented-btn py-1.5 ${
+                    readingStatus === status ? "segmented-btn-on" : "segmented-btn-off"
                   }`}
                 >
                   {READING_STATUS_LABELS[status]}
@@ -130,7 +130,7 @@ export default function ReviewModal({
                 window.localStorage.setItem(draftKey(book.id), e.target.value);
               }}
               placeholder="감상평 없이 평점만 남겨도 돼요"
-              className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+              className="field-input"
             />
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -151,25 +151,19 @@ export default function ReviewModal({
             />
             익명으로 작성하기 (닉네임 대신 &quot;익명&quot;으로 표시돼요)
           </label>
-          {state.error && (
-            <p className="text-sm text-red-600">{state.error}</p>
-          )}
+          {state.error && <p className="text-sm text-negative">{state.error}</p>}
           <div className="flex gap-2">
             {book.my_rating != null && (
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={isDeleting || pending}
-                className="rounded-md border border-border px-4 py-2 font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                className="btn border border-border text-negative hover:bg-[var(--negative-soft)]"
               >
                 {isDeleting ? "삭제 중..." : "삭제"}
               </button>
             )}
-            <button
-              type="submit"
-              disabled={pending || isDeleting}
-              className="rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-            >
+            <button type="submit" disabled={pending || isDeleting} className="btn btn-primary">
               {pending ? "저장 중..." : "저장"}
             </button>
           </div>

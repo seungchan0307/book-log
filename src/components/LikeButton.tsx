@@ -60,7 +60,16 @@ export default function LikeButton({
           : "border-border text-muted"
       } ${isLoggedIn ? "hover:border-red-300 hover:text-red-500" : ""}`}
     >
-      <span className="text-base leading-none">{liked ? "♥" : "♡"}</span>
+      <svg
+        className="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill={liked ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        aria-hidden="true"
+      >
+        <path d="M12 20.5s-7.5-4.6-10-9.3C.6 8 2 4.5 5.3 3.7c2-.5 4 .3 5.2 2 .5.7.9 1.4 1.5 1.4s1-.7 1.5-1.4c1.2-1.7 3.2-2.5 5.2-2 3.3.8 4.7 4.3 3.3 7.5-2.5 4.7-10 9.3-10 9.3Z" />
+      </svg>
       <span className="text-[10px] leading-none">{count}</span>
     </button>
   );

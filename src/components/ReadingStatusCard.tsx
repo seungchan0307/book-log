@@ -1,3 +1,4 @@
+import Mark from "@/components/Mark";
 import MonthCalendar from "@/components/MonthCalendar";
 import type { DayStatus, ReadingLogStatus } from "@/lib/types";
 
@@ -22,8 +23,9 @@ export default function ReadingStatusCard({
   return (
     <div className="flex w-full max-w-2xl flex-col items-center gap-5 rounded-lg border border-border bg-card p-6">
       {bookmarkTokensEarned !== undefined && (
-        <p className="text-sm font-medium text-accent">
-          🔖 책갈피 토큰 {bookmarkTokensEarned}개 획득!
+        <p className="flex items-center gap-1.5 text-sm font-medium text-accent">
+          <Mark />
+          책갈피 토큰 {bookmarkTokensEarned}개 획득!
         </p>
       )}
       {status === "read" ? (

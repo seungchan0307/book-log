@@ -18,17 +18,17 @@ export function StarDisplay({
         aria-label={`평점 ${rating !== null ? rating.toFixed(2) : "없음"}점`}
       >
         <span className="text-border" aria-hidden="true">
-          ★★★★★
+          ★★★★★{/* taste-skill-ignore: the star-rating glyph, not a decorative emoji */}
         </span>
         <span
           className="absolute inset-0 overflow-hidden text-accent"
           style={{ width: `${fillPercent}%` }}
           aria-hidden="true"
         >
-          ★★★★★
+          ★★★★★{/* taste-skill-ignore: the star-rating glyph, not a decorative emoji */}
         </span>
       </span>
-      <span className="text-muted">
+      <span className="num text-muted">
         {rating !== null ? rating.toFixed(2) : "0.00"}
       </span>
     </div>
@@ -60,14 +60,14 @@ export function StarPicker({
             className="relative inline-block text-2xl leading-none"
           >
             <span className="text-border" aria-hidden="true">
-              ★
+              ★{/* taste-skill-ignore: the star-rating glyph, not a decorative emoji */}
             </span>
             <span
               className="absolute inset-0 overflow-hidden text-accent"
               style={{ width: `${fillPercent}%` }}
               aria-hidden="true"
             >
-              ★
+              ★{/* taste-skill-ignore: the star-rating glyph, not a decorative emoji */}
             </span>
             <button
               type="button"

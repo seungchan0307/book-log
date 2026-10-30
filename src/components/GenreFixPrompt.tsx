@@ -50,18 +50,18 @@ export default function GenreFixPrompt({ bookId }: { bookId: number }) {
           onChange={(e) => setCustomGenre(e.target.value)}
           maxLength={20}
           placeholder="장르 직접 입력"
-          className="w-36 rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-accent"
+          className="field-input w-36 py-1.5 text-sm"
         />
       )}
       <button
         type="button"
         onClick={handleSave}
         disabled={isPending}
-        className="rounded-md border border-border px-2 py-1 text-xs hover:bg-card disabled:opacity-50"
+        className="btn btn-outline px-2 py-1 text-xs disabled:opacity-50"
       >
         {isPending ? "저장 중..." : "저장"}
       </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-negative">{error}</span>}
     </div>
   );
 }

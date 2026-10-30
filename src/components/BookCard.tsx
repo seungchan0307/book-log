@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { removeFromMyLibrary } from "@/app/actions/books";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import { StarDisplay } from "@/components/StarRating";
 import type { BookWithStats } from "@/lib/types";
 
@@ -34,7 +35,7 @@ export default function BookCard({
   }
 
   return (
-    <div className="flex gap-3 rounded-lg border border-border bg-card p-4">
+    <div className="book-card">
       <Link
         href={`/books/${book.id}`}
         className="relative flex h-24 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-2xl text-muted"
@@ -48,7 +49,7 @@ export default function BookCard({
             className="object-cover"
           />
         ) : (
-          "📖"
+          <BookPlaceholder className="h-8 w-8" />
         )}
       </Link>
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -61,26 +62,19 @@ export default function BookCard({
               <p className="truncate text-sm text-muted">{book.author}</p>
             )}
           </div>
-          {book.genre && (
-            <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted">
-              {book.genre}
-            </span>
-          )}
+          {book.genre && <span className="pill pill-neutral shrink-0">{book.genre}</span>}
         </div>
         <StarDisplay rating={book.avg_rating} />
         {isLoggedIn ? (
           <div className="mt-1 flex flex-wrap gap-2">
-            <button
-              onClick={() => onReview(book)}
-              className="self-start rounded-md border border-border px-3 py-1 text-sm hover:bg-background"
-            >
+            <button onClick={() => onReview(book)} className="btn btn-outline btn-sm self-start">
               {book.my_rating ? "내 감상 수정" : "감상 남기기"}
             </button>
             {canRemove && (
               <button
                 onClick={handleRemove}
                 disabled={isRemoving}
-                className="self-start rounded-md border border-border px-3 py-1 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50"
+                className="btn btn-sm self-start text-negative hover:bg-[var(--negative-soft)]"
               >
                 {isRemoving ? "삭제 중..." : "서재에서 삭제"}
               </button>

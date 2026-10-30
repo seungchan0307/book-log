@@ -31,7 +31,7 @@ export default function SettingsMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-label="화면 설정"
         aria-expanded={open}
-        className="rounded-md border border-border px-2.5 py-1 hover:bg-background sm:px-3 sm:py-1.5"
+        className="btn btn-outline btn-sm"
       >
         설정
       </button>
