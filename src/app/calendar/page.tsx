@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import {
   getCurrentStreak,
@@ -8,6 +7,7 @@ import {
   listMyBookOptions,
 } from "@/lib/data";
 import { todayDateString } from "@/lib/date";
+import AuthGate from "@/components/AuthGate";
 import ReadingCheckinForm from "@/components/ReadingCheckinForm";
 import ReadingStatusCard from "@/components/ReadingStatusCard";
 
@@ -16,18 +16,10 @@ export default async function CalendarPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold">독서 캘린더</h1>
-        <p className="text-muted">
-          로그인하면 매일 독서 기록을 남기고 연속 기록을 확인할 수 있어요.
-        </p>
-        <Link
-          href="/login"
-          className="rounded-md bg-accent px-5 py-2.5 font-medium text-accent-foreground hover:opacity-90"
-        >
-          로그인
-        </Link>
-      </div>
+      <AuthGate
+        title="독서 캘린더"
+        description="로그인하면 매일 독서 기록을 남기고 연속 기록을 확인할 수 있어요."
+      />
     );
   }
 

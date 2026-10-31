@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import LikeButton from "@/components/LikeButton";
 import { StarDisplay } from "@/components/StarRating";
 import type { PopularReview } from "@/lib/types";
@@ -33,11 +34,7 @@ export default function PopularReviewList({
   }, [reviews, sort]);
 
   if (reviews.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-        아직 보여줄 감상평이 없어요.
-      </p>
-    );
+    return <p className="empty">아직 보여줄 감상평이 없어요.</p>;
   }
 
   return (
@@ -46,32 +43,21 @@ export default function PopularReviewList({
         <button
           type="button"
           onClick={() => setSort("latest")}
-          className={`rounded-md border px-3 py-1 ${
-            sort === "latest"
-              ? "border-accent bg-accent text-accent-foreground"
-              : "border-border hover:bg-card"
-          }`}
+          className={`segmented-btn ${sort === "latest" ? "segmented-btn-on" : "segmented-btn-off"}`}
         >
           최신순
         </button>
         <button
           type="button"
           onClick={() => setSort("popular")}
-          className={`rounded-md border px-3 py-1 ${
-            sort === "popular"
-              ? "border-accent bg-accent text-accent-foreground"
-              : "border-border hover:bg-card"
-          }`}
+          className={`segmented-btn ${sort === "popular" ? "segmented-btn-on" : "segmented-btn-off"}`}
         >
           인기순
         </button>
       </div>
-      <ul className="flex flex-col gap-3">
+      <ul className="panel flex flex-col">
         {sorted.map((r) => (
-          <li
-            key={r.id}
-            className="flex gap-3 rounded-lg border border-border bg-card p-4"
-          >
+          <li key={r.id} className="feed-row flex gap-3">
             <Link
               href={`/books/${r.book_id}`}
               className="relative flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-xl text-muted"
@@ -85,7 +71,7 @@ export default function PopularReviewList({
                   className="object-cover"
                 />
               ) : (
-                "📖"
+                <BookPlaceholder className="h-7 w-7" />
               )}
             </Link>
             <div className="flex min-w-0 flex-1 flex-col gap-1">

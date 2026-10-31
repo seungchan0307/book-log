@@ -20,7 +20,7 @@ export default function LoginForm() {
           name="username"
           type="text"
           required
-          className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+          className="field-input"
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -32,7 +32,7 @@ export default function LoginForm() {
           name="password"
           type="password"
           required
-          className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+          className="field-input"
         />
         <Link
           href="/reset-password"
@@ -41,12 +41,8 @@ export default function LoginForm() {
           비밀번호를 잊으셨나요?
         </Link>
       </div>
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-      >
+      {state.error && <p className="text-sm text-negative">{state.error}</p>}
+      <button type="submit" disabled={pending} className="btn btn-primary">
         {pending ? "로그인 중..." : "로그인"}
       </button>
     </form>

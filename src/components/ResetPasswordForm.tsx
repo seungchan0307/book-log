@@ -17,12 +17,9 @@ export default function ResetPasswordForm() {
 
   if (state.success) {
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 text-center">
+      <div className="panel flex flex-col gap-3 text-center">
         <p>비밀번호가 변경됐어요.</p>
-        <Link
-          href="/login"
-          className="self-center rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
-        >
+        <Link href="/login" className="btn btn-primary self-center">
           로그인하러 가기
         </Link>
       </div>
@@ -40,7 +37,7 @@ export default function ResetPasswordForm() {
           name="username"
           type="text"
           required
-          className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+          className="field-input"
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -52,7 +49,7 @@ export default function ResetPasswordForm() {
           name="birthdate"
           type="date"
           required
-          className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+          className="field-input"
         />
         <span className="text-xs text-muted">
           가입 시 (또는 프로필에서) 등록한 생년월일과 일치해야 해요.
@@ -68,7 +65,7 @@ export default function ResetPasswordForm() {
           type="password"
           required
           minLength={8}
-          className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+          className="field-input"
         />
       </div>
       <div className="flex flex-col gap-1">
@@ -81,15 +78,11 @@ export default function ResetPasswordForm() {
           type="password"
           required
           minLength={8}
-          className="rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+          className="field-input"
         />
       </div>
-      {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-      >
+      {state.error && <p className="text-sm text-negative">{state.error}</p>}
+      <button type="submit" disabled={pending} className="btn btn-primary">
         {pending ? "변경 중..." : "비밀번호 변경"}
       </button>
     </form>

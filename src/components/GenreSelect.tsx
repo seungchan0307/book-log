@@ -34,7 +34,7 @@ export default function GenreSelect({
         onChange={(e) => setQuery(e.target.value)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
         placeholder={placeholder}
-        className="w-full rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+        className="field-input w-full"
       />
       {open && (
         <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-border bg-card p-1 shadow-lg">

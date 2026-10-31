@@ -34,7 +34,7 @@ export default function MonthlyGoalCard({
 
   if (editing) {
     return (
-      <div className="flex flex-col gap-2 rounded-lg border border-border bg-card p-4">
+      <div className="panel flex flex-col gap-2">
         <span className="text-sm font-medium">이번 달 목표 설정</span>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -43,14 +43,14 @@ export default function MonthlyGoalCard({
             max={100}
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            className="w-20 rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+            className="field-input w-20"
           />
           <span className="text-sm text-muted">권 읽기</span>
           <button
             type="button"
             onClick={handleSave}
             disabled={isPending}
-            className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
+            className="btn btn-primary btn-sm"
           >
             {isPending ? "저장 중..." : "설정"}
           </button>

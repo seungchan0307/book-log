@@ -9,6 +9,7 @@ import {
   recordSearchHistory,
   searchAladinForExplore,
 } from "@/app/actions/books";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import BookPosterRow from "@/components/BookPosterRow";
 import GenreSelect from "@/components/GenreSelect";
 import { StarDisplay } from "@/components/StarRating";
@@ -182,7 +183,7 @@ export default function ExploreClient({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="제목 또는 저자로 검색"
-            className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+            className="field-input min-w-[200px] flex-1"
           />
           <div className="w-48">
             <GenreSelect
@@ -201,10 +202,8 @@ export default function ExploreClient({
                 key={mode}
                 type="button"
                 onClick={() => setSortMode(mode)}
-                className={`rounded-md border px-3 py-1 ${
-                  sortMode === mode
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : "border-border hover:bg-card"
+                className={`segmented-btn ${
+                  sortMode === mode ? "segmented-btn-on" : "segmented-btn-off"
                 }`}
               >
                 {SORT_LABELS[mode]}
@@ -241,7 +240,7 @@ export default function ExploreClient({
                   type="button"
                   onClick={() => openResult(b)}
                   disabled={isSearching}
-                  className="flex w-full gap-3 rounded-lg border border-border bg-card p-3 text-left hover:border-accent disabled:opacity-50"
+                  className="book-card w-full p-3 text-left disabled:opacity-50"
                 >
                   <div className="relative flex h-16 w-11 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-lg text-muted">
                     {b.cover ? (
@@ -253,7 +252,7 @@ export default function ExploreClient({
                         className="object-cover"
                       />
                     ) : (
-                      "📖"
+                      <BookPlaceholder className="h-5 w-5" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -275,7 +274,7 @@ export default function ExploreClient({
       )}
 
       {sorted.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border p-8 text-center text-muted">
+        <p className="empty">
           {books.length === 0
             ? "아직 등록된 책이 없어요."
             : "조건에 맞는 책이 없어요."}
@@ -287,7 +286,7 @@ export default function ExploreClient({
               key={book.id}
               href={`/books/${book.id}`}
               onClick={() => visitBook(book.id)}
-              className="flex gap-3 rounded-lg border border-border bg-card p-4 hover:border-accent"
+              className="book-card"
             >
               <div className="relative flex h-24 w-16 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-2xl text-muted">
                 {book.cover_url ? (
@@ -299,7 +298,7 @@ export default function ExploreClient({
                     className="object-cover"
                   />
                 ) : (
-                  "📖"
+                  <BookPlaceholder className="h-8 w-8" />
                 )}
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -313,20 +312,14 @@ export default function ExploreClient({
                     )}
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
-                    {book.genre && (
-                      <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted">
-                        {book.genre}
-                      </span>
-                    )}
+                    {book.genre && <span className="pill pill-neutral">{book.genre}</span>}
                     {isInMyLibrary(book) && (
-                      <span className="rounded-full border border-accent px-2 py-0.5 text-xs text-accent">
-                        내 서재에 있음
-                      </span>
+                      <span className="pill pill-accent">내 서재에 있음</span>
                     )}
                   </div>
                 </div>
                 <StarDisplay rating={book.avg_rating} />
-                <span className="text-xs text-muted">
+                <span className="num text-xs text-muted">
                   탐색 {book.view_count}회
                 </span>
               </div>

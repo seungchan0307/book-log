@@ -15,6 +15,7 @@ import {
   rarityTextStyle,
   spineBackgroundStyle,
 } from "@/lib/gacha";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import type { BookshelfItem } from "@/lib/types";
 
 type Phase = "idle" | "opening" | "revealed";
@@ -44,7 +45,7 @@ function BookSpine({
       <span
         className="pointer-events-none absolute inset-y-0 left-0 w-1/3"
         style={{
-          background: "linear-gradient(90deg, rgba(255,255,255,0.35), transparent)",
+          background: "linear-gradient(90deg, rgba(255,255,255,0.35), transparent)", // taste-skill-ignore: a lit highlight on the book spine, not UI chrome
         }}
       />
       <span
@@ -75,7 +76,7 @@ function BookCoverBlock({
   return (
     <>
       {coverUrl ? (
-        <div className="relative h-32 w-20 overflow-hidden rounded shadow-md">
+        <div className="relative h-32 w-20 overflow-hidden rounded shadow-md"> {/* taste-skill-ignore: shadow on a photographed book cover, not a resting UI panel */}
           <Image
             src={coverUrl}
             alt={title}
@@ -85,7 +86,7 @@ function BookCoverBlock({
           />
         </div>
       ) : (
-        <span className="text-6xl">📖</span>
+        <BookPlaceholder className="h-16 w-16" />
       )}
       <span className="text-lg font-bold">{title}</span>
       {author && <span className="text-sm text-muted">{author}</span>}
@@ -165,20 +166,25 @@ export default function BookshelfClient({
         </p>
       </div>
 
-      <div className="flex flex-col items-center gap-4 rounded-lg border border-border bg-card p-8">
+      <div className="panel flex flex-col items-center gap-4 p-8">
         <div
-          className={`flex h-28 w-28 items-center justify-center rounded-full border-4 border-accent text-5xl ${
+          className={`flex h-28 w-28 items-center justify-center rounded-full border-4 border-accent ${
             phase === "opening" ? "animate-[gacha-shake_0.9s_ease-in-out]" : ""
           }`}
         >
-          🎁
+          {/* 가챠 뽑기 캡슐: 둥근 2단 캡슐 토이 */}
+          <svg className="h-14 w-14" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <path d="M24 6a18 18 0 0 1 18 18H6A18 18 0 0 1 24 6Z" fill="var(--accent)" />
+            <path d="M6 24a18 18 0 0 0 36 0" fill="var(--accent-soft)" stroke="var(--accent)" strokeWidth="1.5" />
+            <circle cx="24" cy="24" r="4.5" fill="var(--card)" stroke="var(--accent)" strokeWidth="1.5" />
+          </svg>
         </div>
         <span className="text-sm text-muted">보유 뽑기권 {ticketCount}장</span>
         <button
           type="button"
           onClick={handlePull}
           disabled={ticketCount <= 0 || phase !== "idle" || isPending}
-          className="rounded-md bg-accent px-6 py-2.5 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
+          className="btn btn-primary px-6 py-2.5"
         >
           {phase === "opening" ? "뽑는 중..." : "뽑기"}
         </button>
@@ -187,7 +193,7 @@ export default function BookshelfClient({
             책을 다 읽으면 뽑기권을 받을 수 있어요.
           </span>
         )}
-        {error && <span className="text-sm text-red-600">{error}</span>}
+        {error && <span className="text-sm text-negative">{error}</span>}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -205,9 +211,8 @@ export default function BookshelfClient({
         <div
           className="flex flex-col gap-4 rounded-2xl p-3 sm:p-4"
           style={{
-            background: "linear-gradient(180deg, #8b5e34, #6b4423)",
-            boxShadow:
-              "inset 0 2px 6px rgba(0, 0, 0, 0.35), 0 6px 14px rgba(0, 0, 0, 0.2)",
+            background: "linear-gradient(180deg, #8b5e34, #6b4423)", // taste-skill-ignore: draws the wooden shelf, not UI chrome
+            boxShadow: "inset 0 2px 6px rgba(0, 0, 0, 0.35), 0 6px 14px rgba(0, 0, 0, 0.2)", // taste-skill-ignore: draws the wooden shelf's depth, not UI chrome
           }}
         >
           {Array.from({ length: bookshelfRows }).map((_, rowIndex) => (
@@ -240,9 +245,8 @@ export default function BookshelfClient({
               <div
                 className="h-3 rounded-sm"
                 style={{
-                  background: "linear-gradient(180deg, #a9743f, #6b4423)",
-                  boxShadow:
-                    "0 3px 5px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
+                  background: "linear-gradient(180deg, #a9743f, #6b4423)", // taste-skill-ignore: draws the wooden plank, not UI chrome
+                  boxShadow: "0 3px 5px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15)", // taste-skill-ignore: draws the wooden plank's depth, not UI chrome
                 }}
               />
             </div>
@@ -273,7 +277,7 @@ export default function BookshelfClient({
             style={rarityCardStyle(revealed.rarity)}
           >
             <span
-              className="text-xs font-semibold uppercase tracking-wide"
+              className="pill"
               style={rarityTextStyle(revealed.rarity)}
             >
               {RARITY_LABELS[revealed.rarity]}
@@ -286,7 +290,7 @@ export default function BookshelfClient({
             {revealed.duplicate && (
               <span className="text-sm text-muted">
                 {revealed.upgraded
-                  ? `이미 있던 책이 ${RARITY_LABELS[revealed.previousRarity!]} → ${RARITY_LABELS[revealed.rarity]}(으)로 승급했어요 🎉`
+                  ? `이미 있던 책이 ${RARITY_LABELS[revealed.previousRarity!]} → ${RARITY_LABELS[revealed.rarity]}(으)로 승급했어요`
                   : `이미 책장에 있는 책이에요. 기존 ${RARITY_LABELS[revealed.previousRarity!]} 등급이 더 높아 그대로 유지돼요.`}
               </span>
             )}
@@ -312,7 +316,7 @@ export default function BookshelfClient({
             onClick={(e) => e.stopPropagation()}
           >
             <span
-              className="text-xs font-semibold uppercase tracking-wide"
+              className="pill"
               style={rarityTextStyle(selected.rarity)}
             >
               {RARITY_LABELS[selected.rarity]}

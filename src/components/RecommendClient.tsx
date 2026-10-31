@@ -20,11 +20,7 @@ function BookGrid({
   onReview: (book: BookWithStats) => void;
 }) {
   if (books.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-        아직 보여줄 책이 없어요.
-      </p>
-    );
+    return <p className="empty">아직 보여줄 책이 없어요.</p>;
   }
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -91,24 +87,19 @@ export default function RecommendClient({
               onReview={setReviewTarget}
             />
           ) : (
-            <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed border-border p-6 text-center text-muted">
+            <div className="empty flex flex-col items-center gap-3">
               <p>
                 책에 3.5점 이상의 감상을 남기면, 좋아하는 장르를 바탕으로
                 맞춤 추천을 보여드려요.
               </p>
-              <Link
-                href="/explore"
-                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground hover:opacity-90"
-              >
+              <Link href="/explore" className="btn btn-primary btn-sm">
                 책 둘러보러 가기
               </Link>
             </div>
           )}
         </section>
       ) : (
-        <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-          로그인하면 내 취향에 맞는 책을 추천받을 수 있어요.
-        </p>
+        <p className="empty">로그인하면 내 취향에 맞는 책을 추천받을 수 있어요.</p>
       )}
 
       <section className="flex flex-col gap-3">
@@ -124,7 +115,7 @@ export default function RecommendClient({
         <BookPosterRow
           books={mostViewed}
           metric={(book) => (
-            <span className="text-xs text-muted">
+            <span className="num text-xs text-muted">
               탐색 {book.view_count}회
             </span>
           )}
@@ -150,13 +141,9 @@ export default function RecommendClient({
           clearLabel="선택 안 함"
         />
         {!genre ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-            장르를 선택하면 그 장르에서 평점 높은 책을 보여드려요.
-          </p>
+          <p className="empty">장르를 선택하면 그 장르에서 평점 높은 책을 보여드려요.</p>
         ) : isLoadingGenre ? (
-          <p className="rounded-lg border border-dashed border-border p-6 text-center text-muted">
-            불러오는 중...
-          </p>
+          <p className="empty">불러오는 중...</p>
         ) : (
           <BookPosterRow
             books={genreBooks}

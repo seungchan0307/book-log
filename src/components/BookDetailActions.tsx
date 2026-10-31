@@ -29,7 +29,7 @@ export default function BookDetailActions({
       <>
         <button
           onClick={() => setOpen(true)}
-          className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
+          className="btn btn-primary self-start"
         >
           책 등록하기
         </button>
@@ -49,7 +49,7 @@ export default function BookDetailActions({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
+        className="btn btn-primary self-start"
       >
         {book.my_rating ? "내 감상 수정" : "감상 남기기"}
       </button>

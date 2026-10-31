@@ -8,6 +8,7 @@ import {
   type BookFormState,
 } from "@/app/actions/books";
 import { GENRES } from "@/lib/genres";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import GenreSelect from "@/components/GenreSelect";
 import { StarPicker } from "@/components/StarRating";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
@@ -156,7 +157,7 @@ export default function AddBookForm({
         }
         setClientError(null);
       }}
-      className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
+      className="panel flex flex-col gap-3"
     >
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">새 책 등록</h3>
@@ -175,10 +176,10 @@ export default function AddBookForm({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="책 제목으로 검색"
-          className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+          className="field-input text-sm"
         />
         {isSearching && <p className="text-xs text-muted">검색 중...</p>}
-        {searchError && <p className="text-sm text-red-600">{searchError}</p>}
+        {searchError && <p className="text-sm text-negative">{searchError}</p>}
         {searchResults.length > 0 && (
           <ul className="flex max-h-56 flex-col gap-2 overflow-y-auto">
             {searchResults.map((b) => (
@@ -198,7 +199,7 @@ export default function AddBookForm({
                         className="object-cover"
                       />
                     ) : (
-                      "📖"
+                      <BookPlaceholder className="h-5 w-5" />
                     )}
                   </div>
                   <div className="min-w-0">
@@ -234,7 +235,7 @@ export default function AddBookForm({
             maxLength={200}
             value={fields.title}
             onChange={(e) => setFields({ ...fields, title: e.target.value })}
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+            className="field-input"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -246,7 +247,7 @@ export default function AddBookForm({
             name="author"
             value={fields.author}
             onChange={(e) => setFields({ ...fields, author: e.target.value })}
-            className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+            className="field-input"
           />
         </div>
         <div className="flex flex-col gap-1">
@@ -277,10 +278,8 @@ export default function AddBookForm({
                 key={status}
                 type="button"
                 onClick={() => setReadingStatus(status)}
-                className={`rounded-md border px-3 py-1.5 text-sm ${
-                  readingStatus === status
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : "border-border hover:bg-background"
+                className={`segmented-btn py-1.5 ${
+                  readingStatus === status ? "segmented-btn-on" : "segmented-btn-off"
                 }`}
               >
                 {READING_STATUS_LABELS[status]}
@@ -317,7 +316,7 @@ export default function AddBookForm({
               name="content"
               rows={10}
               placeholder="감상평 없이 평점만 남겨도 돼요"
-              className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+              className="field-input"
             />
           </div>
           <label className="flex items-center gap-2 text-sm">
@@ -341,13 +340,9 @@ export default function AddBookForm({
       )}
 
       {(clientError || state.error) && (
-        <p className="text-sm text-red-600">{clientError || state.error}</p>
+        <p className="text-sm text-negative">{clientError || state.error}</p>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending} className="btn btn-primary self-start">
         {pending ? "등록 중..." : "등록"}
       </button>
     </form>

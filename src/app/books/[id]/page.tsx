@@ -13,6 +13,7 @@ import {
 import { SITE_NAME } from "@/lib/site";
 import { StarDisplay } from "@/components/StarRating";
 import BookDetailActions from "@/components/BookDetailActions";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import GenreFixPrompt from "@/components/GenreFixPrompt";
 import PublicReviewList from "@/components/PublicReviewList";
 import RatingDistribution from "@/components/RatingDistribution";
@@ -82,17 +83,13 @@ export default async function BookDetailPage({
               className="object-cover"
             />
           ) : (
-            "📖"
+            <BookPlaceholder className="h-12 w-12" />
           )}
         </div>
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">{book.title}</h1>
-            {book.genre && (
-              <span className="rounded-full border border-border px-2 py-0.5 text-xs text-muted">
-                {book.genre}
-              </span>
-            )}
+            {book.genre && <span className="pill pill-neutral">{book.genre}</span>}
           </div>
           {!book.genre && user && <GenreFixPrompt bookId={book.id} />}
           {book.author && <p className="text-muted">{book.author}</p>}
@@ -122,7 +119,7 @@ export default async function BookDetailPage({
                 href={book.purchase_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="self-start rounded-md border border-border px-4 py-2 text-sm font-medium hover:bg-card"
+                className="btn btn-outline self-start"
               >
                 책 사러가기
               </a>
@@ -134,7 +131,7 @@ export default async function BookDetailPage({
       {book.my_rating && (
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold">내 감상</h2>
-          <div className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4">
+          <div className="panel flex flex-col gap-1">
             <div className="flex items-center justify-between">
               <StarDisplay rating={book.my_rating} />
               <span className="text-xs text-muted">

@@ -69,7 +69,9 @@ export default function RegisterBookModal({
             className="text-muted hover:text-foreground"
             aria-label="닫기"
           >
-            ✕
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M5 5l10 10M15 5 5 15" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
         <form
@@ -101,10 +103,8 @@ export default function RegisterBookModal({
                     key={status}
                     type="button"
                     onClick={() => setReadingStatus(status)}
-                    className={`rounded-md border px-3 py-1.5 text-sm ${
-                      readingStatus === status
-                        ? "border-accent bg-accent text-accent-foreground"
-                        : "border-border hover:bg-background"
+                    className={`segmented-btn py-1.5 ${
+                      readingStatus === status ? "segmented-btn-on" : "segmented-btn-off"
                     }`}
                   >
                     {READING_STATUS_LABELS[status]}
@@ -141,7 +141,7 @@ export default function RegisterBookModal({
                   name="content"
                   rows={10}
                   placeholder="감상평 없이 평점만 남겨도 돼요"
-                  className="rounded-md border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+                  className="field-input"
                 />
               </div>
               <label className="flex items-center gap-2 text-sm">
@@ -165,13 +165,9 @@ export default function RegisterBookModal({
           )}
 
           {(clientError || state.error) && (
-            <p className="text-sm text-red-600">{clientError || state.error}</p>
+            <p className="text-sm text-negative">{clientError || state.error}</p>
           )}
-          <button
-            type="submit"
-            disabled={pending}
-            className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-          >
+          <button type="submit" disabled={pending} className="btn btn-primary self-start">
             {pending ? "등록 중..." : "등록"}
           </button>
         </form>

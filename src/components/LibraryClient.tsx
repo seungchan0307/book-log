@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import AddBookForm from "@/components/AddBookForm";
 import BookCard from "@/components/BookCard";
+import BookPlaceholder from "@/components/BookPlaceholder";
 import GenreSelect from "@/components/GenreSelect";
 import MonthlyGoalCard from "@/components/MonthlyGoalCard";
 import ReviewModal from "@/components/ReviewModal";
@@ -99,7 +100,7 @@ export default function LibraryClient({
         ) : (
           <button
             onClick={() => setAddOpen(true)}
-            className="self-start rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90"
+            className="btn btn-primary self-start"
           >
             + 책 등록하기
           </button>
@@ -112,11 +113,9 @@ export default function LibraryClient({
 
           <Link
             href="/bookshelf"
-            className="flex items-center justify-between rounded-lg border border-border bg-card p-4 hover:border-accent"
+            className="book-card items-center justify-between"
           >
-            <span className="flex items-center gap-2 font-medium">
-              🎁 책장 구경하기
-            </span>
+            <span className="font-medium">책장 구경하기</span>
             <span className="text-sm text-muted">
               뽑기권 {gachaTicketCount}장 · 책갈피 토큰 {bookmarkTokens}개
             </span>
@@ -127,7 +126,7 @@ export default function LibraryClient({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="제목 또는 저자로 검색"
-              className="flex-1 min-w-[200px] rounded-md border border-border bg-card px-3 py-2 outline-none focus:border-accent"
+              className="field-input min-w-[200px] flex-1"
             />
             <div className="w-48">
               <GenreSelect
@@ -140,7 +139,7 @@ export default function LibraryClient({
           </div>
 
           {filtered.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-border p-8 text-center text-muted">
+            <p className="empty">
               {books.length === 0
                 ? "아직 등록된 책이 없어요. 첫 책을 등록해보세요!"
                 : "조건에 맞는 책이 없어요."}
@@ -180,12 +179,9 @@ export default function LibraryClient({
           {myReviews.length === 0 ? (
             <p className="text-muted">아직 남긴 감상이 없어요.</p>
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="panel flex flex-col">
               {myReviews.map((r) => (
-                <li
-                  key={r.id}
-                  className="flex gap-3 rounded-lg border border-border bg-card p-4"
-                >
+                <li key={r.id} className="feed-row flex gap-3">
                   <Link
                     href={`/books/${r.book_id}`}
                     className="relative flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded bg-background text-xl text-muted"
@@ -199,7 +195,7 @@ export default function LibraryClient({
                         className="object-cover"
                       />
                     ) : (
-                      "📖"
+                      <BookPlaceholder className="h-7 w-7" />
                     )}
                   </Link>
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
